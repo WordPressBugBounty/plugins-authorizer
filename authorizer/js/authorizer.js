@@ -208,7 +208,7 @@
 					var duplicateEmail = response.invalid_emails[i];
 					$( 'li.new-user .auth-email[value="' + duplicateEmail + '"]' )
 						.siblings( '.spinner' ).addClass( 'duplicate' ).append( '<span class="spinner-text"><span class="attention">' + authL10n.duplicate + '.</span></span>' )
-						.parent().fadeOut( spinnerWait, function() { $( this ).remove(); }); // jshint ignore:line
+						.parent().fadeOut( 2000, function() { $( this ).remove(); }); // jshint ignore:line
 				}
 			}
 
@@ -392,22 +392,48 @@
 		var auth_settings_external_oauth2_url_authorize = $( '#auth_settings_oauth2_url_authorize' ).closest( 'tr' );
 		var auth_settings_external_oauth2_url_token = $( '#auth_settings_oauth2_url_token' ).closest( 'tr' );
 		var auth_settings_external_oauth2_url_resource = $( '#auth_settings_oauth2_url_resource' ).closest( 'tr' );
+		var auth_settings_external_oauth2_attr_username = $( '#auth_settings_oauth2_attr_username' ).closest( 'tr' );
+		var auth_settings_external_oauth2_attr_email = $( '#auth_settings_oauth2_attr_email' ).closest( 'tr' );
+		var auth_settings_external_oauth2_attr_first_name = $( '#auth_settings_oauth2_attr_first_name' ).closest( 'tr' );
+		var auth_settings_external_oauth2_attr_last_name = $( '#auth_settings_oauth2_attr_last_name' ).closest( 'tr' );
+		var auth_settings_external_oauth2_attr_update_on_login = $( '#auth_settings_oauth2_attr_update_on_login' ).closest( 'tr' );
 		var auth_settings_external_oauth2_auto_login = $( '#auth_settings_oauth2_auto_login' ).closest( 'tr' );
 		var auth_settings_external_google_clientid = $( '#auth_settings_google_clientid' ).closest( 'tr' );
 		var auth_settings_external_google_clientsecret = $( '#auth_settings_google_clientsecret' ).closest( 'tr' );
 		var auth_settings_external_google_hosteddomain = $( '#auth_settings_google_hosteddomain' ).closest( 'tr' );
 		var auth_settings_external_cas_auto_login = $( '#auth_settings_cas_auto_login' ).closest( 'tr' );
-		var auth_settings_external_cas_custom_label = $( '#auth_settings_cas_custom_label' ).closest( 'tr' );
-		var auth_settings_external_cas_host = $( '#auth_settings_cas_host' ).closest( 'tr' );
-		var auth_settings_external_cas_port = $( '#auth_settings_cas_port' ).closest( 'tr' );
-		var auth_settings_external_cas_path = $( '#auth_settings_cas_path' ).closest( 'tr' );
-		var auth_settings_external_cas_method = $( '#auth_settings_cas_method' ).closest( 'tr' );
-		var auth_settings_external_cas_version = $( '#auth_settings_cas_version' ).closest( 'tr' );
-		var auth_settings_external_cas_attr_email = $( '#auth_settings_cas_attr_email' ).closest( 'tr' );
-		var auth_settings_external_cas_attr_first_name = $( '#auth_settings_cas_attr_first_name' ).closest( 'tr' );
-		var auth_settings_external_cas_attr_last_name = $( '#auth_settings_cas_attr_last_name' ).closest( 'tr' );
-		var auth_settings_external_cas_attr_update_on_login = $( '#auth_settings_cas_attr_update_on_login' ).closest( 'tr' );
-		var auth_settings_external_cas_link_on_username = $( '#auth_settings_cas_link_on_username' ).closest( 'tr' );
+		var auth_settings_external_cas_num_servers = $( '#auth_settings_cas_num_servers' ).closest( 'tr' );
+		var auth_settings_external_cas_servers = [];
+		// CAS settings below are for the first configured CAS server.
+		auth_settings_external_cas_servers.push( {
+			custom_label: $( '#auth_settings_cas_custom_label' ).closest( 'tr' ),
+			host: $( '#auth_settings_cas_host' ).closest( 'tr' ),
+			port: $( '#auth_settings_cas_port' ).closest( 'tr' ),
+			path: $( '#auth_settings_cas_path' ).closest( 'tr' ),
+			method: $( '#auth_settings_cas_method' ).closest( 'tr' ),
+			version: $( '#auth_settings_cas_version' ).closest( 'tr' ),
+			attr_email: $( '#auth_settings_cas_attr_email' ).closest( 'tr' ),
+			attr_first_name: $( '#auth_settings_cas_attr_first_name' ).closest( 'tr' ),
+			attr_last_name: $( '#auth_settings_cas_attr_last_name' ).closest( 'tr' ),
+			attr_update_on_login: $( '#auth_settings_cas_attr_update_on_login' ).closest( 'tr' ),
+			link_on_username: $( '#auth_settings_cas_link_on_username' ).closest( 'tr' ),
+		} );
+		// CAS settings below are for any additional CAS servers configured (up to 10).
+		for ( var i = 2; i <= parseInt( $( '#auth_settings_cas_num_servers' ).val() ) && i <= 10; i++ ) {
+			auth_settings_external_cas_servers.push( {
+				custom_label: $( '#auth_settings_cas_custom_label_' + i ).closest( 'tr' ),
+				host: $( '#auth_settings_cas_host_' + i ).closest( 'tr' ),
+				port: $( '#auth_settings_cas_port_' + i ).closest( 'tr' ),
+				path: $( '#auth_settings_cas_path_' + i ).closest( 'tr' ),
+				method: $( '#auth_settings_cas_method_' + i ).closest( 'tr' ),
+				version: $( '#auth_settings_cas_version_' + i ).closest( 'tr' ),
+				attr_email: $( '#auth_settings_cas_attr_email_' + i ).closest( 'tr' ),
+				attr_first_name: $( '#auth_settings_cas_attr_first_name_' + i ).closest( 'tr' ),
+				attr_last_name: $( '#auth_settings_cas_attr_last_name_' + i ).closest( 'tr' ),
+				attr_update_on_login: $( '#auth_settings_cas_attr_update_on_login_' + i ).closest( 'tr' ),
+				link_on_username: $( '#auth_settings_cas_link_on_username_' + i ).closest( 'tr' ),
+			} );
+		}
 		var auth_settings_external_ldap_host = $( '#auth_settings_ldap_host' ).closest( 'tr' );
 		var auth_settings_external_ldap_port = $( '#auth_settings_ldap_port' ).closest( 'tr' );
 		var auth_settings_external_ldap_search_base = $( '#auth_settings_ldap_search_base' ).closest( 'tr' );
@@ -461,6 +487,11 @@
 			animateOption( 'hide_immediately', auth_settings_external_oauth2_url_authorize );
 			animateOption( 'hide_immediately', auth_settings_external_oauth2_url_token );
 			animateOption( 'hide_immediately', auth_settings_external_oauth2_url_resource );
+			animateOption( 'hide_immediately', auth_settings_external_oauth2_attr_username );
+			animateOption( 'hide_immediately', auth_settings_external_oauth2_attr_email );
+			animateOption( 'hide_immediately', auth_settings_external_oauth2_attr_first_name );
+			animateOption( 'hide_immediately', auth_settings_external_oauth2_attr_last_name );
+			animateOption( 'hide_immediately', auth_settings_external_oauth2_attr_update_on_login );
 		}
 
 		// Hide OAuth2 Tenant ID if azure isn't chosen.
@@ -478,17 +509,20 @@
 		// Hide CAS options if unchecked
 		if ( ! $( '#auth_settings_cas' ).is( ':checked' ) ) {
 			animateOption( 'hide_immediately', auth_settings_external_cas_auto_login );
-			animateOption( 'hide_immediately', auth_settings_external_cas_custom_label );
-			animateOption( 'hide_immediately', auth_settings_external_cas_host );
-			animateOption( 'hide_immediately', auth_settings_external_cas_port );
-			animateOption( 'hide_immediately', auth_settings_external_cas_path );
-			animateOption( 'hide_immediately', auth_settings_external_cas_method );
-			animateOption( 'hide_immediately', auth_settings_external_cas_version );
-			animateOption( 'hide_immediately', auth_settings_external_cas_attr_email );
-			animateOption( 'hide_immediately', auth_settings_external_cas_attr_first_name );
-			animateOption( 'hide_immediately', auth_settings_external_cas_attr_last_name );
-			animateOption( 'hide_immediately', auth_settings_external_cas_attr_update_on_login );
-			animateOption( 'hide_immediately', auth_settings_external_cas_link_on_username );
+			animateOption( 'hide_immediately', auth_settings_external_cas_num_servers );
+			auth_settings_external_cas_servers.forEach( function( server ) {
+				animateOption( 'hide_immediately', server.custom_label );
+				animateOption( 'hide_immediately', server.host );
+				animateOption( 'hide_immediately', server.port );
+				animateOption( 'hide_immediately', server.path );
+				animateOption( 'hide_immediately', server.method );
+				animateOption( 'hide_immediately', server.version );
+				animateOption( 'hide_immediately', server.attr_email );
+				animateOption( 'hide_immediately', server.attr_first_name );
+				animateOption( 'hide_immediately', server.attr_last_name );
+				animateOption( 'hide_immediately', server.attr_update_on_login );
+				animateOption( 'hide_immediately', server.link_on_username );
+			} );
 		}
 
 		// Hide LDAP options if unchecked
@@ -555,6 +589,11 @@
 			animateOption( action, auth_settings_external_oauth2_url_authorize );
 			animateOption( action, auth_settings_external_oauth2_url_token );
 			animateOption( action, auth_settings_external_oauth2_url_resource );
+			animateOption( action, auth_settings_external_oauth2_attr_username );
+			animateOption( action, auth_settings_external_oauth2_attr_email );
+			animateOption( action, auth_settings_external_oauth2_attr_first_name );
+			animateOption( action, auth_settings_external_oauth2_attr_last_name );
+			animateOption( action, auth_settings_external_oauth2_attr_update_on_login );
 			action = 'azure' === $( this ).val() ? 'show' : 'hide';
 			animateOption( action, auth_settings_external_oauth2_tenant_id );
 		});
@@ -571,17 +610,20 @@
 		$( 'input[name="auth_settings[cas]"]' ).on( 'change', function() {
 			var action = $( this ).is( ':checked' ) ? 'show' : 'hide';
 			animateOption( action, auth_settings_external_cas_auto_login );
-			animateOption( action, auth_settings_external_cas_custom_label );
-			animateOption( action, auth_settings_external_cas_host );
-			animateOption( action, auth_settings_external_cas_port );
-			animateOption( action, auth_settings_external_cas_path );
-			animateOption( action, auth_settings_external_cas_method );
-			animateOption( action, auth_settings_external_cas_version );
-			animateOption( action, auth_settings_external_cas_attr_email );
-			animateOption( action, auth_settings_external_cas_attr_first_name );
-			animateOption( action, auth_settings_external_cas_attr_last_name );
-			animateOption( action, auth_settings_external_cas_attr_update_on_login );
-			animateOption( action, auth_settings_external_cas_link_on_username );
+			animateOption( action, auth_settings_external_cas_num_servers );
+			auth_settings_external_cas_servers.forEach( function( server ) {
+				animateOption( action, server.custom_label );
+				animateOption( action, server.host );
+				animateOption( action, server.port );
+				animateOption( action, server.path );
+				animateOption( action, server.method );
+				animateOption( action, server.version );
+				animateOption( action, server.attr_email );
+				animateOption( action, server.attr_first_name );
+				animateOption( action, server.attr_last_name );
+				animateOption( action, server.attr_update_on_login );
+				animateOption( action, server.link_on_username );
+			} );
 		});
 
 		// Event handler: Show/hide LDAP options based on checkbox
@@ -780,13 +822,14 @@
 	window.hideMultisiteOverriddenOptions = function() {
 		$( '.auth_multisite_override_overlay' ).each( function() {
 			// Option to hide is stored in the overlay's id with 'overlay-hide-' prefix.
-			var optionContainerToHide = $( this ).closest( 'tr' );
+			var optionContainerToHide = $( this ).closest( 'td' );
 			if ( optionContainerToHide.length > 0 ) {
 				$( this ).css({
 					'background-color': '#f1f1f1',
 					'z-index': 1,
 					opacity: 0.8,
 					position: 'absolute',
+					top: optionContainerToHide.css('padding-top'),
 					width: '100%',
 					height: optionContainerToHide.height(),
 				});
@@ -1114,6 +1157,11 @@
 		params.oauth2_url_authorize = $( '#auth_settings_oauth2_url_authorize' ).val();
 		params.oauth2_url_token = $( '#auth_settings_oauth2_url_token' ).val();
 		params.oauth2_url_resource = $( '#auth_settings_oauth2_url_resource' ).val();
+		params.oauth2_attr_username = $( '#auth_settings_oauth2_attr_username' ).val();
+		params.oauth2_attr_email = $( '#auth_settings_oauth2_attr_email' ).val();
+		params.oauth2_attr_first_name = $( '#auth_settings_oauth2_attr_first_name' ).val();
+		params.oauth2_attr_last_name = $( '#auth_settings_oauth2_attr_last_name' ).val();
+		params.oauth2_attr_update_on_login = $( '#auth_settings_oauth2_attr_update_on_login' ).val();
 		params.oauth2_auto_login = $( '#auth_settings_oauth2_auto_login' ).is( ':checked' ) ? '1' : '';
 
 		params.google = $( '#auth_settings_google' ).is( ':checked' ) ? '1' : '';
@@ -1122,7 +1170,8 @@
 		params.google_hosteddomain = $( '#auth_settings_google_hosteddomain' ).val();
 
 		params.cas = $( '#auth_settings_cas' ).is( ':checked' ) ? '1' : '';
-		params.cas_auto_login = $( '#auth_settings_cas_auto_login' ).is( ':checked' ) ? '1' : '';
+		params.cas_auto_login = $( '#auth_settings_cas_auto_login' ).val();
+		params.cas_num_servers = parseInt( $( '#auth_settings_cas_num_servers' ).val() );
 		params.cas_custom_label = $( '#auth_settings_cas_custom_label' ).val();
 		params.cas_host = $( '#auth_settings_cas_host' ).val();
 		params.cas_port = $( '#auth_settings_cas_port' ).val();
@@ -1134,6 +1183,21 @@
 		params.cas_attr_last_name = $( '#auth_settings_cas_attr_last_name' ).val();
 		params.cas_attr_update_on_login = $( '#auth_settings_cas_attr_update_on_login' ).val();
 		params.cas_link_on_username = $( '#auth_settings_cas_link_on_username' ).is( ':checked' ) ? '1' : '';
+		if ( params.cas_num_servers > 1 ) {
+			for ( var cas_num_server = 2; cas_num_server <= params.cas_num_servers && cas_num_server <= 10; cas_num_server++ ) {
+				params['cas_custom_label_' + cas_num_server] = $( '#auth_settings_cas_custom_label_' + cas_num_server ).val();
+				params['cas_host_' + cas_num_server] = $( '#auth_settings_cas_host_' + cas_num_server ).val();
+				params['cas_port_' + cas_num_server] = $( '#auth_settings_cas_port_' + cas_num_server ).val();
+				params['cas_path_' + cas_num_server] = $( '#auth_settings_cas_path_' + cas_num_server ).val();
+				params['cas_method_' + cas_num_server] = $( '#auth_settings_cas_method_' + cas_num_server ).val();
+				params['cas_version_' + cas_num_server] = $( '#auth_settings_cas_version_' + cas_num_server ).val();
+				params['cas_attr_email_' + cas_num_server] = $( '#auth_settings_cas_attr_email_' + cas_num_server ).val();
+				params['cas_attr_first_name_' + cas_num_server] = $( '#auth_settings_cas_attr_first_name_' + cas_num_server ).val();
+				params['cas_attr_last_name_' + cas_num_server] = $( '#auth_settings_cas_attr_last_name_' + cas_num_server ).val();
+				params['cas_attr_update_on_login_' + cas_num_server] = $( '#auth_settings_cas_attr_update_on_login_' + cas_num_server ).val();
+				params['cas_link_on_username_' + cas_num_server] = $( '#auth_settings_cas_link_on_username_' + cas_num_server ).is( ':checked' ) ? '1' : '';
+			}
+		}
 
 		params.ldap = $( '#auth_settings_ldap' ).is( ':checked' ) ? '1' : '';
 		params.ldap_host = $( '#auth_settings_ldap_host' ).val();
@@ -1176,6 +1240,12 @@
 
 			// Disable wait cursor.
 			$( 'html' ).removeClass( 'busy' );
+
+			// If the save was successful, and we have more than 1 CAS servers configured,
+			// reload the page to render the additional CAS server settings fields.
+			if ( succeeded && params.cas_num_servers > 1 ) {
+				location.reload();
+			}
 		}).fail( function() {
 			// Fail fires if the server doesn't respond
 			var succeeded = false;

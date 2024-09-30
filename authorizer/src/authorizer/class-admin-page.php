@@ -408,6 +408,13 @@ class Admin_Page extends Singleton {
 			)
 		);
 		add_settings_field(
+			'auth_settings_oauth2_auto_login',
+			__( 'OAuth2 automatic login', 'authorizer' ),
+			array( OAuth2::get_instance(), 'print_checkbox_oauth2_auto_login' ),
+			'authorizer',
+			'auth_settings_external'
+		);
+		add_settings_field(
 			'auth_settings_oauth2_provider',
 			__( 'Provider', 'authorizer' ),
 			array( OAuth2::get_instance(), 'print_select_oauth2_provider' ),
@@ -471,9 +478,37 @@ class Admin_Page extends Singleton {
 			'auth_settings_external'
 		);
 		add_settings_field(
-			'auth_settings_oauth2_auto_login',
-			__( 'OAuth2 automatic login', 'authorizer' ),
-			array( OAuth2::get_instance(), 'print_checkbox_oauth2_auto_login' ),
+			'auth_settings_oauth2_attr_username',
+			__( 'Attribute containing username', 'authorizer' ),
+			array( OAuth2::get_instance(), 'print_text_oauth2_attr_username' ),
+			'authorizer',
+			'auth_settings_external'
+		);
+		add_settings_field(
+			'auth_settings_oauth2_attr_email',
+			__( 'Attribute containing email', 'authorizer' ),
+			array( OAuth2::get_instance(), 'print_text_oauth2_attr_email' ),
+			'authorizer',
+			'auth_settings_external'
+		);
+		add_settings_field(
+			'auth_settings_oauth2_attr_first_name',
+			__( 'Attribute containing first name', 'authorizer' ),
+			array( OAuth2::get_instance(), 'print_text_oauth2_attr_first_name' ),
+			'authorizer',
+			'auth_settings_external'
+		);
+		add_settings_field(
+			'auth_settings_oauth2_attr_last_name',
+			__( 'Attribute containing last name', 'authorizer' ),
+			array( OAuth2::get_instance(), 'print_text_oauth2_attr_last_name' ),
+			'authorizer',
+			'auth_settings_external'
+		);
+		add_settings_field(
+			'auth_settings_oauth2_attr_update_on_login',
+			__( 'Name attribute update', 'authorizer' ),
+			array( Oauth2::get_instance(), 'print_select_oauth2_attr_update_on_login' ),
 			'authorizer',
 			'auth_settings_external'
 		);
@@ -521,89 +556,140 @@ class Admin_Page extends Singleton {
 			)
 		);
 		add_settings_field(
-			'auth_settings_cas_custom_label',
-			__( 'CAS custom label', 'authorizer' ),
-			array( Cas::get_instance(), 'print_text_cas_custom_label' ),
+			'auth_settings_cas_num_servers',
+			__( 'CAS server(s)', 'authorizer' ),
+			array( Cas::get_instance(), 'print_number_cas_num_servers' ),
 			'authorizer',
 			'auth_settings_external'
 		);
-		add_settings_field(
-			'auth_settings_cas_host',
-			__( 'CAS server hostname', 'authorizer' ),
-			array( Cas::get_instance(), 'print_text_cas_host' ),
-			'authorizer',
-			'auth_settings_external'
-		);
-		add_settings_field(
-			'auth_settings_cas_port',
-			__( 'CAS server port', 'authorizer' ),
-			array( Cas::get_instance(), 'print_text_cas_port' ),
-			'authorizer',
-			'auth_settings_external'
-		);
-		add_settings_field(
-			'auth_settings_cas_path',
-			__( 'CAS server path/context', 'authorizer' ),
-			array( Cas::get_instance(), 'print_text_cas_path' ),
-			'authorizer',
-			'auth_settings_external'
-		);
-		add_settings_field(
-			'auth_settings_cas_method',
-			__( 'CAS server method', 'authorizer' ),
-			array( Cas::get_instance(), 'print_select_cas_method' ),
-			'authorizer',
-			'auth_settings_external'
-		);
-		add_settings_field(
-			'auth_settings_cas_version',
-			__( 'CAS server protocol', 'authorizer' ),
-			array( Cas::get_instance(), 'print_select_cas_version' ),
-			'authorizer',
-			'auth_settings_external'
-		);
-		add_settings_field(
-			'auth_settings_cas_attr_email',
-			__( 'CAS attribute containing email address', 'authorizer' ),
-			array( Cas::get_instance(), 'print_text_cas_attr_email' ),
-			'authorizer',
-			'auth_settings_external'
-		);
-		add_settings_field(
-			'auth_settings_cas_attr_first_name',
-			__( 'CAS attribute containing first name', 'authorizer' ),
-			array( Cas::get_instance(), 'print_text_cas_attr_first_name' ),
-			'authorizer',
-			'auth_settings_external'
-		);
-		add_settings_field(
-			'auth_settings_cas_attr_last_name',
-			__( 'CAS attribute containing last name', 'authorizer' ),
-			array( Cas::get_instance(), 'print_text_cas_attr_last_name' ),
-			'authorizer',
-			'auth_settings_external'
-		);
-		add_settings_field(
-			'auth_settings_cas_attr_update_on_login',
-			__( 'CAS attribute update', 'authorizer' ),
-			array( Cas::get_instance(), 'print_select_cas_attr_update_on_login' ),
-			'authorizer',
-			'auth_settings_external'
-		);
+		$cas_num_servers = max( 1, min( 10, intval( Options::get_instance()->get( 'cas_num_servers', Helper::SINGLE_CONTEXT, 'allow override' ) ) ) );
 		add_settings_field(
 			'auth_settings_cas_auto_login',
 			__( 'CAS automatic login', 'authorizer' ),
-			array( Cas::get_instance(), 'print_checkbox_cas_auto_login' ),
+			array( Cas::get_instance(), 'print_select_cas_auto_login' ),
 			'authorizer',
-			'auth_settings_external'
+			'auth_settings_external',
+			array(
+				'cas_num_servers' => $cas_num_servers,
+			)
 		);
-		add_settings_field(
-			'auth_settings_cas_link_on_username',
-			__( 'CAS users linked by username', 'authorizer' ),
-			array( Cas::get_instance(), 'print_checkbox_cas_link_on_username' ),
-			'authorizer',
-			'auth_settings_external'
-		);
+		foreach ( range( 1, $cas_num_servers ) as $cas_num_server ) {
+			$suffix = 1 === $cas_num_server ? '' : '_' . $cas_num_server;
+			$prefix = $cas_num_server . '. ';
+
+			add_settings_field(
+				'auth_settings_cas_custom_label' . $suffix,
+				$prefix . __( 'CAS custom label', 'authorizer' ),
+				array( Cas::get_instance(), 'print_text_cas_custom_label' ),
+				'authorizer',
+				'auth_settings_external',
+				array(
+					'class'          => 'border-top-small',
+					'cas_num_server' => $cas_num_server,
+				)
+			);
+			add_settings_field(
+				'auth_settings_cas_host' . $suffix,
+				$prefix . __( 'CAS server hostname', 'authorizer' ),
+				array( Cas::get_instance(), 'print_text_cas_host' ),
+				'authorizer',
+				'auth_settings_external',
+				array(
+					'cas_num_server' => $cas_num_server,
+				)
+			);
+			add_settings_field(
+				'auth_settings_cas_port' . $suffix,
+				$prefix . __( 'CAS server port', 'authorizer' ),
+				array( Cas::get_instance(), 'print_text_cas_port' ),
+				'authorizer',
+				'auth_settings_external',
+				array(
+					'cas_num_server' => $cas_num_server,
+				)
+			);
+			add_settings_field(
+				'auth_settings_cas_path' . $suffix,
+				$prefix . __( 'CAS server path/context', 'authorizer' ),
+				array( Cas::get_instance(), 'print_text_cas_path' ),
+				'authorizer',
+				'auth_settings_external',
+				array(
+					'cas_num_server' => $cas_num_server,
+				)
+			);
+			add_settings_field(
+				'auth_settings_cas_method' . $suffix,
+				$prefix . __( 'CAS server method', 'authorizer' ),
+				array( Cas::get_instance(), 'print_select_cas_method' ),
+				'authorizer',
+				'auth_settings_external',
+				array(
+					'cas_num_server' => $cas_num_server,
+				)
+			);
+			add_settings_field(
+				'auth_settings_cas_version' . $suffix,
+				$prefix . __( 'CAS server protocol', 'authorizer' ),
+				array( Cas::get_instance(), 'print_select_cas_version' ),
+				'authorizer',
+				'auth_settings_external',
+				array(
+					'cas_num_server' => $cas_num_server,
+				)
+			);
+			add_settings_field(
+				'auth_settings_cas_attr_email' . $suffix,
+				$prefix . __( 'CAS attribute containing email address', 'authorizer' ),
+				array( Cas::get_instance(), 'print_text_cas_attr_email' ),
+				'authorizer',
+				'auth_settings_external',
+				array(
+					'cas_num_server' => $cas_num_server,
+				)
+			);
+			add_settings_field(
+				'auth_settings_cas_attr_first_name' . $suffix,
+				$prefix . __( 'CAS attribute containing first name', 'authorizer' ),
+				array( Cas::get_instance(), 'print_text_cas_attr_first_name' ),
+				'authorizer',
+				'auth_settings_external',
+				array(
+					'cas_num_server' => $cas_num_server,
+				)
+			);
+			add_settings_field(
+				'auth_settings_cas_attr_last_name' . $suffix,
+				$prefix . __( 'CAS attribute containing last name', 'authorizer' ),
+				array( Cas::get_instance(), 'print_text_cas_attr_last_name' ),
+				'authorizer',
+				'auth_settings_external',
+				array(
+					'cas_num_server' => $cas_num_server,
+				)
+			);
+			add_settings_field(
+				'auth_settings_cas_attr_update_on_login' . $suffix,
+				$prefix . __( 'CAS attribute update', 'authorizer' ),
+				array( Cas::get_instance(), 'print_select_cas_attr_update_on_login' ),
+				'authorizer',
+				'auth_settings_external',
+				array(
+					'cas_num_server' => $cas_num_server,
+				)
+			);
+			add_settings_field(
+				'auth_settings_cas_link_on_username' . $suffix,
+				$prefix . __( 'CAS users linked by username', 'authorizer' ),
+				array( Cas::get_instance(), 'print_checkbox_cas_link_on_username' ),
+				'authorizer',
+				'auth_settings_external',
+				array(
+					'cas_num_server' => $cas_num_server,
+				)
+			);
+		}
+
 		add_settings_field(
 			'auth_settings_external_ldap',
 			__( 'LDAP Logins', 'authorizer' ),
@@ -883,9 +969,14 @@ class Admin_Page extends Singleton {
 							<th scope="row"><?php esc_html_e( 'Default role for new users', 'authorizer' ); ?></th>
 							<td><?php $external->print_select_auth_access_default_role( array( 'context' => Helper::NETWORK_CONTEXT ) ); ?></td>
 						</tr>
+
 						<tr class="border-top">
 							<th scope="row"><?php esc_html_e( 'OAuth2 Logins', 'authorizer' ); ?></th>
 							<td><?php $oauth2->print_checkbox_auth_external_oauth2( array( 'context' => Helper::NETWORK_CONTEXT ) ); ?></td>
+						</tr>
+						<tr>
+							<th scope="row"><?php esc_html_e( 'OAuth2 automatic login', 'authorizer' ); ?></th>
+							<td><?php $oauth2->print_checkbox_oauth2_auto_login( array( 'context' => Helper::NETWORK_CONTEXT ) ); ?></td>
 						</tr>
 						<tr>
 							<th scope="row"><?php esc_html_e( 'OAuth2 Provider', 'authorizer' ); ?></th>
@@ -924,9 +1015,28 @@ class Admin_Page extends Singleton {
 							<td><?php $oauth2->print_text_oauth2_url_resource( array( 'context' => Helper::NETWORK_CONTEXT ) ); ?></td>
 						</tr>
 						<tr>
-							<th scope="row"><?php esc_html_e( 'OAuth2 automatic login', 'authorizer' ); ?></th>
-							<td><?php $oauth2->print_checkbox_oauth2_auto_login( array( 'context' => Helper::NETWORK_CONTEXT ) ); ?></td>
+						<tr>
+							<th scope="row"><?php esc_html_e( 'Attribute containing username', 'authorizer' ); ?></th>
+							<td><?php $oauth2->print_text_oauth2_attr_username( array( 'context' => Helper::NETWORK_CONTEXT ) ); ?></td>
 						</tr>
+						<tr>
+							<th scope="row"><?php esc_html_e( 'Attribute containing email', 'authorizer' ); ?></th>
+							<td><?php $oauth2->print_text_oauth2_attr_email( array( 'context' => Helper::NETWORK_CONTEXT ) ); ?></td>
+						</tr>
+						<tr>
+							<th scope="row"><?php esc_html_e( 'Attribute containing first name', 'authorizer' ); ?></th>
+							<td><?php $oauth2->print_text_oauth2_attr_first_name( array( 'context' => Helper::NETWORK_CONTEXT ) ); ?></td>
+						</tr>
+						<tr>
+						<tr>
+							<th scope="row"><?php esc_html_e( 'Attribute containing last name', 'authorizer' ); ?></th>
+							<td><?php $oauth2->print_text_oauth2_attr_last_name( array( 'context' => Helper::NETWORK_CONTEXT ) ); ?></td>
+						</tr>
+						<tr>
+							<th scope="row"><?php esc_html_e( 'Name attribute update', 'authorizer' ); ?></th>
+							<td><?php $oauth2->print_select_oauth2_attr_update_on_login( array( 'context' => Helper::NETWORK_CONTEXT ) ); ?></td>
+						</tr>
+
 						<tr class="border-top">
 							<th scope="row"><?php esc_html_e( 'Google Logins', 'authorizer' ); ?></th>
 							<td><?php $google->print_checkbox_auth_external_google( array( 'context' => Helper::NETWORK_CONTEXT ) ); ?></td>
@@ -948,53 +1058,141 @@ class Admin_Page extends Singleton {
 							<td><?php $cas->print_checkbox_auth_external_cas( array( 'context' => Helper::NETWORK_CONTEXT ) ); ?></td>
 						</tr>
 						<tr>
-							<th scope="row"><?php esc_html_e( 'CAS Custom Label', 'authorizer' ); ?></th>
-							<td><?php $cas->print_text_cas_custom_label( array( 'context' => Helper::NETWORK_CONTEXT ) ); ?></td>
+							<th scope="row"><?php esc_html_e( 'CAS server(s)', 'authorizer' ); ?></th>
+							<td><?php $cas->print_number_cas_num_servers( array( 'context' => Helper::NETWORK_CONTEXT ) ); ?></td>
 						</tr>
-						<tr>
-							<th scope="row"><?php esc_html_e( 'CAS server hostname', 'authorizer' ); ?></th>
-							<td><?php $cas->print_text_cas_host( array( 'context' => Helper::NETWORK_CONTEXT ) ); ?></td>
-						</tr>
-						<tr>
-							<th scope="row"><?php esc_html_e( 'CAS server port', 'authorizer' ); ?></th>
-							<td><?php $cas->print_text_cas_port( array( 'context' => Helper::NETWORK_CONTEXT ) ); ?></td>
-						</tr>
-						<tr>
-							<th scope="row"><?php esc_html_e( 'CAS server path/context', 'authorizer' ); ?></th>
-							<td><?php $cas->print_text_cas_path( array( 'context' => Helper::NETWORK_CONTEXT ) ); ?></td>
-						</tr>
-						<tr>
-							<th scope="row"><?php esc_html_e( 'CAS server method', 'authorizer' ); ?></th>
-							<td><?php $cas->print_select_cas_method( array( 'context' => Helper::NETWORK_CONTEXT ) ); ?></td>
-						</tr>
-						<tr>
-							<th scope="row"><?php esc_html_e( 'CAS server protocol', 'authorizer' ); ?></th>
-							<td><?php $cas->print_select_cas_version( array( 'context' => Helper::NETWORK_CONTEXT ) ); ?></td>
-						</tr>
-						<tr>
-							<th scope="row"><?php esc_html_e( 'CAS attribute containing email', 'authorizer' ); ?></th>
-							<td><?php $cas->print_text_cas_attr_email( array( 'context' => Helper::NETWORK_CONTEXT ) ); ?></td>
-						</tr>
-						<tr>
-							<th scope="row"><?php esc_html_e( 'CAS attribute containing first name', 'authorizer' ); ?></th>
-							<td><?php $cas->print_text_cas_attr_first_name( array( 'context' => Helper::NETWORK_CONTEXT ) ); ?></td>
-						</tr>
-						<tr>
-							<th scope="row"><?php esc_html_e( 'CAS attribute containing last name', 'authorizer' ); ?></th>
-							<td><?php $cas->print_text_cas_attr_last_name( array( 'context' => Helper::NETWORK_CONTEXT ) ); ?></td>
-						</tr>
-						<tr>
-							<th scope="row"><?php esc_html_e( 'CAS attribute update', 'authorizer' ); ?></th>
-							<td><?php $cas->print_select_cas_attr_update_on_login( array( 'context' => Helper::NETWORK_CONTEXT ) ); ?></td>
-						</tr>
+						<?php $cas_num_servers = max( 1, min( 10, intval( $auth_settings['cas_num_servers'] ?? 1 ) ) ); ?>
 						<tr>
 							<th scope="row"><?php esc_html_e( 'CAS automatic login', 'authorizer' ); ?></th>
-							<td><?php $cas->print_checkbox_cas_auto_login( array( 'context' => Helper::NETWORK_CONTEXT ) ); ?></td>
+							<td><?php $cas->print_select_cas_auto_login( array( 'context' => Helper::NETWORK_CONTEXT, 'cas_num_servers' => $cas_num_servers ) ); ?></td>
 						</tr>
-						<tr>
-							<th scope="row"><?php esc_html_e( 'CAS users linked by username', 'authorizer' ); ?></th>
-							<td><?php $cas->print_checkbox_cas_link_on_username( array( 'context' => Helper::NETWORK_CONTEXT ) ); ?></td>
-						</tr>
+						<?php
+						foreach ( range( 1, $cas_num_servers ) as $cas_num_server ) :
+							$prefix = $cas_num_server . '. ';
+							?>
+							<tr class="border-top-small">
+								<th scope="row"><?php echo esc_html( $prefix ); ?><?php esc_html_e( 'CAS Custom Label', 'authorizer' ); ?></th>
+								<td>
+									<?php
+									$cas->print_text_cas_custom_label( array(
+										'context'        => Helper::NETWORK_CONTEXT,
+										'cas_num_server' => $cas_num_server,
+									) );
+									?>
+								</td>
+							</tr>
+							<tr>
+								<th scope="row"><?php echo esc_html( $prefix ); ?><?php esc_html_e( 'CAS server hostname', 'authorizer' ); ?></th>
+								<td>
+									<?php
+									$cas->print_text_cas_host( array(
+										'context'        => Helper::NETWORK_CONTEXT,
+										'cas_num_server' => $cas_num_server,
+									) );
+									?>
+								</td>
+							</tr>
+							<tr>
+								<th scope="row"><?php echo esc_html( $prefix ); ?><?php esc_html_e( 'CAS server port', 'authorizer' ); ?></th>
+								<td>
+									<?php
+									$cas->print_text_cas_port( array(
+										'context'        => Helper::NETWORK_CONTEXT,
+										'cas_num_server' => $cas_num_server,
+									) );
+									?>
+								</td>
+							</tr>
+							<tr>
+								<th scope="row"><?php echo esc_html( $prefix ); ?><?php esc_html_e( 'CAS server path/context', 'authorizer' ); ?></th>
+								<td>
+									<?php
+									$cas->print_text_cas_path( array(
+										'context'        => Helper::NETWORK_CONTEXT,
+										'cas_num_server' => $cas_num_server,
+									) );
+									?>
+								</td>
+							</tr>
+							<tr>
+								<th scope="row"><?php echo esc_html( $prefix ); ?><?php esc_html_e( 'CAS server method', 'authorizer' ); ?></th>
+								<td>
+									<?php
+									$cas->print_select_cas_method( array(
+										'context'        => Helper::NETWORK_CONTEXT,
+										'cas_num_server' => $cas_num_server,
+									) );
+									?>
+								</td>
+							</tr>
+							<tr>
+								<th scope="row"><?php echo esc_html( $prefix ); ?><?php esc_html_e( 'CAS server protocol', 'authorizer' ); ?></th>
+								<td>
+									<?php
+									$cas->print_select_cas_version( array(
+										'context'        => Helper::NETWORK_CONTEXT,
+										'cas_num_server' => $cas_num_server,
+									) );
+									?>
+								</td>
+							</tr>
+							<tr>
+								<th scope="row"><?php echo esc_html( $prefix ); ?><?php esc_html_e( 'CAS attribute containing email', 'authorizer' ); ?></th>
+								<td>
+									<?php
+									$cas->print_text_cas_attr_email( array(
+										'context'        => Helper::NETWORK_CONTEXT,
+										'cas_num_server' => $cas_num_server,
+									) );
+									?>
+								</td>
+							</tr>
+							<tr>
+								<th scope="row"><?php echo esc_html( $prefix ); ?><?php esc_html_e( 'CAS attribute containing first name', 'authorizer' ); ?></th>
+								<td>
+									<?php
+									$cas->print_text_cas_attr_first_name( array(
+										'context'        => Helper::NETWORK_CONTEXT,
+										'cas_num_server' => $cas_num_server,
+									) );
+									?>
+								</td>
+							</tr>
+							<tr>
+								<th scope="row"><?php echo esc_html( $prefix ); ?><?php esc_html_e( 'CAS attribute containing last name', 'authorizer' ); ?></th>
+								<td>
+									<?php
+									$cas->print_text_cas_attr_last_name( array(
+										'context'        => Helper::NETWORK_CONTEXT,
+										'cas_num_server' => $cas_num_server,
+									) );
+									?>
+								</td>
+							</tr>
+							<tr>
+								<th scope="row"><?php echo esc_html( $prefix ); ?><?php esc_html_e( 'CAS attribute update', 'authorizer' ); ?></th>
+								<td>
+									<?php
+									$cas->print_select_cas_attr_update_on_login( array(
+										'context'        => Helper::NETWORK_CONTEXT,
+										'cas_num_server' => $cas_num_server,
+									) );
+									?>
+								</td>
+							</tr>
+							<tr>
+								<th scope="row"><?php echo esc_html( $prefix ); ?><?php esc_html_e( 'CAS users linked by username', 'authorizer' ); ?></th>
+								<td>
+									<?php
+									$cas->print_checkbox_cas_link_on_username( array(
+										'context'        => Helper::NETWORK_CONTEXT,
+										'cas_num_server' => $cas_num_server,
+									) );
+									?>
+								</td>
+							</tr>
+						<?php endforeach; ?>
+
 						<tr class="border-top">
 							<th scope="row"><?php esc_html_e( 'LDAP Logins', 'authorizer' ); ?></th>
 							<td><?php $ldap->print_checkbox_auth_external_ldap( array( 'context' => Helper::NETWORK_CONTEXT ) ); ?></td>
@@ -1159,7 +1357,7 @@ class Admin_Page extends Singleton {
 	 * Action: admin_head-index.php
 	 */
 	public function load_options_page() {
-		wp_enqueue_script( 'authorizer', plugins_url( 'js/authorizer.js', plugin_root() ), array( 'jquery-effects-shake' ), '3.8.4', true );
+		wp_enqueue_script( 'authorizer', plugins_url( 'js/authorizer.js', plugin_root() ), array( 'jquery-effects-shake' ), '3.10.0', true );
 		wp_localize_script(
 			'authorizer',
 			'authL10n',
@@ -1187,7 +1385,7 @@ class Admin_Page extends Singleton {
 
 		wp_enqueue_script( 'jquery.multi-select', plugins_url( 'vendor-custom/jquery.multi-select/0.9.12/js/jquery.multi-select.js', plugin_root() ), array( 'jquery' ), '0.9.12', true );
 
-		wp_register_style( 'authorizer-css', plugins_url( 'css/authorizer.css', plugin_root() ), array(), '3.8.4' );
+		wp_register_style( 'authorizer-css', plugins_url( 'css/authorizer.css', plugin_root() ), array(), '3.10.0' );
 		wp_enqueue_style( 'authorizer-css' );
 
 		wp_register_style( 'jquery-multi-select-css', plugins_url( 'vendor-custom/jquery.multi-select/0.9.12/css/multi-select.css', plugin_root() ), array(), '0.9.12' );

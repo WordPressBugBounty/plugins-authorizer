@@ -165,6 +165,10 @@
 		}
 	}
 
+	// Allow 100% width text fields with .wide class.
+	input[type="text"].wide {
+		width: 100%;
+	}
 
 	// Flex layout for user lists (pending, approved, blocked).
 	#list_auth_settings_access_users_pending li,
@@ -193,6 +197,15 @@
 			&.border-top-small {
 				border-top: 1px solid $color-gray-5;
 			}
+		}
+	}
+
+	// Fix spinner text overlapping spinner icon and overflowing viewport boundaries.
+	.spinner:has(.spinner-text) {
+		width: auto;
+
+		.spinner-text {
+			margin-left: 24px;
 		}
 	}
 }
@@ -355,7 +368,7 @@
 			background: $color-white;
 			border: 1px solid $color-gray-30;
 			cursor: default;
-			margin: 11px 15em;
+			margin: 0 15em;
 			opacity: 0;
 			padding: 8px;
 			position: absolute;

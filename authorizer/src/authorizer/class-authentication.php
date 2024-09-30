@@ -521,6 +521,15 @@ class Authentication extends Singleton {
 				 */
 				$email = apply_filters( 'authorizer_oauth2_generic_authenticated_email', $email, $attributes );
 
+				/**
+				 * Filter the azure oauth2 authenticated user email.
+				 *
+				 * @param  string $email      Discovered email (or empty string).
+				 *
+				 * @param  array  $attributes Resource Owner attributes returned from oauth2 endpoint.
+				 */
+				$email = apply_filters( 'authorizer_oauth2_azure_authenticated_email', $email, $attributes );
+
 				// Set the username to the email prefix (if we don't have one).
 				if ( ! empty( $email ) && empty( $username ) ) {
 					if ( is_array( $email ) && ! empty( $email[0] ) ) {
@@ -607,12 +616,31 @@ class Authentication extends Singleton {
 					return null;
 				}
 
+				// Get custom username attribute, if specified (handle string or array results from attribute).
+				$oauth2_attr_username = $auth_settings['oauth2_attr_username'] ?? '';
+				if ( ! empty( $oauth2_attr_username ) && ! empty( $attributes[ $oauth2_attr_username ] ) ) {
+					if ( is_string( $attributes[ $oauth2_attr_username ] ) ) {
+						$username = trim( $attributes[ $oauth2_attr_username ] );
+					} elseif ( is_array( $attributes[ $oauth2_attr_username ] ) ) {
+						$username = trim( array_shift( $attributes[ $oauth2_attr_username ] ) );
+					}
+				}
+
+				// Get custom email attribute, if specified.
+				$oauth2_attr_email = $auth_settings['oauth2_attr_email'] ?? '';
+				if ( ! empty( $oauth2_attr_email ) && ! empty( $attributes[ $oauth2_attr_email ] ) ) {
+					if ( is_string( $attributes[ $oauth2_attr_email ] ) ) {
+						$email = trim( $attributes[ $oauth2_attr_email ] );
+					} elseif ( is_array( $attributes[ $oauth2_attr_email ] ) ) {
+						$email = $attributes[ $oauth2_attr_email ];
+					}
+				}
+
 				/**
 				 * Filter the generic oauth2 authenticated user email.
 				 *
-				 * @param  string $email      Discovered email (or empty string).
-				 *
-				 * @param  array  $attributes Resource Owner attributes returned from oauth2 endpoint.
+				 * @param  string|array $email      Discovered email or array of emails (or empty string).
+				 * @param  array        $attributes Resource Owner attributes returned from oauth2 endpoint.
 				 */
 				$email = apply_filters( 'authorizer_oauth2_generic_authenticated_email', $email, $attributes );
 
@@ -668,11 +696,33 @@ class Authentication extends Singleton {
 			}
 		}
 
+		// Get user first name (handle string or array results from attribute).
+		$first_name             = '';
+		$oauth2_attr_first_name = $auth_settings['oauth2_attr_first_name'] ?? '';
+		if ( ! empty( $oauth2_attr_first_name ) && ! empty( $attributes[ $oauth2_attr_first_name ] ) ) {
+			if ( is_string( $attributes[ $oauth2_attr_first_name ] ) ) {
+				$first_name = $attributes[ $oauth2_attr_first_name ];
+			} elseif ( is_array( $attributes[ $oauth2_attr_first_name ] ) ) {
+				$first_name = trim( implode( ' ', $attributes[ $oauth2_attr_first_name ] ) );
+			}
+		}
+
+		// Get user last name (handle string or array results from attribute).
+		$last_name             = '';
+		$oauth2_attr_last_name = $auth_settings['oauth2_attr_last_name'] ?? '';
+		if ( ! empty( $oauth2_attr_last_name ) && ! empty( $attributes[ $oauth2_attr_last_name ] ) ) {
+			if ( is_string( $attributes[ $oauth2_attr_last_name ] ) ) {
+				$last_name = $attributes[ $oauth2_attr_last_name ];
+			} elseif ( is_array( $attributes[ $oauth2_attr_last_name ] ) ) {
+				$last_name = trim( implode( ' ', $attributes[ $oauth2_attr_last_name ] ) );
+			}
+		}
+
 		return array(
 			'email'             => $externally_authenticated_email,
 			'username'          => sanitize_user( $username ),
-			'first_name'        => '',
-			'last_name'         => '',
+			'first_name'        => $first_name,
+			'last_name'         => $last_name,
 			'authenticated_by'  => 'oauth2',
 			'oauth2_provider'   => $auth_settings['oauth2_provider'],
 			'oauth2_attributes' => $attributes,
@@ -818,18 +868,34 @@ class Authentication extends Singleton {
 	 *                              object on failure, or null if not attempting a CAS login.
 	 */
 	protected function custom_authenticate_cas( $auth_settings ) {
-		// Move on if CAS hasn't been requested here.
+		// Move on if CAS hasn't been requested here or the CAS server ID is invalid.
+		if ( empty( $auth_settings['cas_num_servers'] ) ) {
+			$auth_settings['cas_num_servers'] = 1;
+		}
 		// phpcs:ignore WordPress.Security.NonceVerification
-		if ( empty( $_GET['external'] ) || 'cas' !== $_GET['external'] ) {
+		if ( empty( $_GET['external'] ) || 'cas' !== $_GET['external'] || empty( $_GET['id'] ) || ! in_array( intval( $_GET['id'] ), range( 1, 10 ), true ) || intval( $_GET['id'] ) > intval( $auth_settings['cas_num_servers'] ) ) {
 			return null;
 		}
+		// Get the CAS server id (since multiple CAS servers can be configured), and
+		// the relevant CAS settings for that server.
+		// phpcs:ignore WordPress.Security.NonceVerification
+		$cas_server_id       = intval( $_GET['id'] );
+		$suffix              = $cas_server_id > 1 ? '_' . $cas_server_id : '';
+		$cas_host            = $auth_settings[ 'cas_host' . $suffix ];
+		$cas_port            = $auth_settings[ 'cas_port' . $suffix ];
+		$cas_path            = $auth_settings[ 'cas_path' . $suffix ];
+		$cas_method          = $auth_settings[ 'cas_method' . $suffix ];
+		$cas_version         = $auth_settings[ 'cas_version' . $suffix ];
+		$cas_attr_email      = $auth_settings[ 'cas_attr_email' . $suffix ];
+		$cas_attr_first_name = $auth_settings[ 'cas_attr_first_name' . $suffix ];
+		$cas_attr_last_name  = $auth_settings[ 'cas_attr_last_name' . $suffix ];
 
 		/**
 		 * Get the CAS server protocol version (default to SAML 1.1).
 		 *
 		 * @see: https://apereo.github.io/phpCAS/api/group__public.html#gadea9415f40b8d2afc39f140c9be83bbe
 		 */
-		$cas_version = Options\External\Cas::get_instance()->sanitize_cas_version( $auth_settings['cas_version'] );
+		$cas_version = Options\External\Cas::get_instance()->sanitize_cas_version( $cas_version );
 
 		/**
 		 * Get valid service URLs for the CAS client to validate against.
@@ -839,10 +905,10 @@ class Authentication extends Singleton {
 		$valid_base_urls = Options\External\Cas::get_instance()->get_valid_cas_service_urls();
 
 		// Set the CAS client configuration.
-		if ( 'PROXY' === strtoupper( $auth_settings['cas_method'] ) ) {
-			\phpCAS::proxy( $cas_version, $auth_settings['cas_host'], intval( $auth_settings['cas_port'] ), $auth_settings['cas_path'], $valid_base_urls );
+		if ( 'PROXY' === strtoupper( $cas_method ) ) {
+			\phpCAS::proxy( $cas_version, $cas_host, intval( $cas_port ), $cas_path, $valid_base_urls );
 		} else {
-			\phpCAS::client( $cas_version, $auth_settings['cas_host'], intval( $auth_settings['cas_port'] ), $auth_settings['cas_path'], $valid_base_urls );
+			\phpCAS::client( $cas_version, $cas_host, intval( $cas_port ), $cas_path, $valid_base_urls );
 		}
 
 		// Allow redirects at the CAS server endpoint (e.g., allow connections
@@ -853,7 +919,7 @@ class Authentication extends Singleton {
 		\phpCAS::setCasServerCACert( ABSPATH . WPINC . '/certificates/ca-bundle.crt' );
 
 		// Set the CAS service URL (including the redirect URL for WordPress when it comes back from CAS).
-		$cas_service_url   = site_url( '/wp-login.php?external=cas' );
+		$cas_service_url   = site_url( '/wp-login.php?external=cas&id=' . $cas_server_id );
 		$login_querystring = array();
 		if ( isset( $_SERVER['QUERY_STRING'] ) ) {
 			parse_str( $_SERVER['QUERY_STRING'], $login_querystring ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput
@@ -889,7 +955,7 @@ class Authentication extends Singleton {
 			// If we can't get the user's email address from a CAS attribute,
 			// try to guess the domain from the CAS server hostname. This will only
 			// be used if we can't discover the email address from CAS attributes.
-			$domain_guess                   = preg_match( '/[^.]*\.[^.]*$/', $auth_settings['cas_host'], $matches ) === 1 ? $matches[0] : '';
+			$domain_guess                   = preg_match( '/[^.]*\.[^.]*$/', $cas_host, $matches ) === 1 ? $matches[0] : '';
 			$externally_authenticated_email = Helper::lowercase( $username ) . '@' . $domain_guess;
 		}
 
@@ -897,55 +963,55 @@ class Authentication extends Singleton {
 		$cas_attributes = \phpCAS::getAttributes();
 
 		// Get user email if it is specified in another field.
-		if ( array_key_exists( 'cas_attr_email', $auth_settings ) && strlen( $auth_settings['cas_attr_email'] ) > 0 ) {
+		if ( ! empty( $cas_attr_email ) ) {
 			// If the email attribute starts with an at symbol (@), assume that the
 			// email domain is manually entered there (instead of a reference to a
 			// CAS attribute), and combine that with the username to create the email.
 			// Otherwise, look up the CAS attribute for email.
-			if ( substr( $auth_settings['cas_attr_email'], 0, 1 ) === '@' ) {
-				$externally_authenticated_email = Helper::lowercase( $username . $auth_settings['cas_attr_email'] );
+			if ( substr( $cas_attr_email, 0, 1 ) === '@' ) {
+				$externally_authenticated_email = Helper::lowercase( $username . $cas_attr_email );
 			} elseif (
 				// If a CAS attribute has been specified as containing the email address, use that instead.
 				// Email attribute can be a string or an array of strings.
-				array_key_exists( $auth_settings['cas_attr_email'], $cas_attributes ) && (
+				array_key_exists( $cas_attr_email, $cas_attributes ) && (
 					(
-						is_array( $cas_attributes[ $auth_settings['cas_attr_email'] ] ) &&
-						count( $cas_attributes[ $auth_settings['cas_attr_email'] ] ) > 0
+						is_array( $cas_attributes[ $cas_attr_email ] ) &&
+						count( $cas_attributes[ $cas_attr_email ] ) > 0
 					) || (
-						is_string( $cas_attributes[ $auth_settings['cas_attr_email'] ] ) &&
-						strlen( $cas_attributes[ $auth_settings['cas_attr_email'] ] ) > 0
+						is_string( $cas_attributes[ $cas_attr_email ] ) &&
+						strlen( $cas_attributes[ $cas_attr_email ] ) > 0
 					)
 				)
 			) {
 				// Each of the emails in the array needs to be set to lowercase.
-				if ( is_array( $cas_attributes[ $auth_settings['cas_attr_email'] ] ) ) {
+				if ( is_array( $cas_attributes[ $cas_attr_email ] ) ) {
 					$externally_authenticated_email = array();
-					foreach ( $cas_attributes[ $auth_settings['cas_attr_email'] ] as $external_email ) {
+					foreach ( $cas_attributes[ $cas_attr_email ] as $external_email ) {
 						$externally_authenticated_email[] = Helper::lowercase( $external_email );
 					}
 				} else {
-					$externally_authenticated_email = Helper::lowercase( $cas_attributes[ $auth_settings['cas_attr_email'] ] );
+					$externally_authenticated_email = Helper::lowercase( $cas_attributes[ $cas_attr_email ] );
 				}
 			}
 		}
 
 		// Get user first name (handle string or array results from CAS attribute).
 		$first_name = '';
-		if ( ! empty( $auth_settings['cas_attr_first_name'] ) && ! empty( $cas_attributes[ $auth_settings['cas_attr_first_name'] ] ) ) {
-			if ( is_string( $cas_attributes[ $auth_settings['cas_attr_first_name'] ] ) ) {
-				$first_name = $cas_attributes[ $auth_settings['cas_attr_first_name'] ];
-			} elseif ( is_array( $cas_attributes[ $auth_settings['cas_attr_first_name'] ] ) ) {
-				$first_name = trim( implode( ' ', $cas_attributes[ $auth_settings['cas_attr_first_name'] ] ) );
+		if ( ! empty( $cas_attr_first_name ) && ! empty( $cas_attributes[ $cas_attr_first_name ] ) ) {
+			if ( is_string( $cas_attributes[ $cas_attr_first_name ] ) ) {
+				$first_name = $cas_attributes[ $cas_attr_first_name ];
+			} elseif ( is_array( $cas_attributes[ $cas_attr_first_name ] ) ) {
+				$first_name = trim( implode( ' ', $cas_attributes[ $cas_attr_first_name ] ) );
 			}
 		}
 
 		// Get user last name (handle string or array results from CAS attribute).
 		$last_name = '';
-		if ( ! empty( $auth_settings['cas_attr_last_name'] ) && ! empty( $cas_attributes[ $auth_settings['cas_attr_last_name'] ] ) ) {
-			if ( is_string( $cas_attributes[ $auth_settings['cas_attr_last_name'] ] ) ) {
-				$last_name = $cas_attributes[ $auth_settings['cas_attr_last_name'] ];
-			} elseif ( is_array( $cas_attributes[ $auth_settings['cas_attr_last_name'] ] ) ) {
-				$last_name = trim( implode( ' ', $cas_attributes[ $auth_settings['cas_attr_last_name'] ] ) );
+		if ( ! empty( $cas_attr_last_name ) && ! empty( $cas_attributes[ $cas_attr_last_name ] ) ) {
+			if ( is_string( $cas_attributes[ $cas_attr_last_name ] ) ) {
+				$last_name = $cas_attributes[ $cas_attr_last_name ];
+			} elseif ( is_array( $cas_attributes[ $cas_attr_last_name ] ) ) {
+				$last_name = trim( implode( ' ', $cas_attributes[ $cas_attr_last_name ] ) );
 			}
 		}
 
