@@ -69,10 +69,10 @@ class Login_Form extends Singleton {
 		 * under the "Advanced" tab in Authorizer options. Example:
 		 * function my_authorizer_add_branding_option( $branding_options ) {
 		 *   $new_branding_option = array(
-		 *    'value' => 'your_brand'
-		 *    'description' => 'Custom Your Brand Login Screen',
-		 *    'css_url' => 'http://url/to/your_brand.css',
-		 *    'js_url' => 'http://url/to/your_brand.js',
+		 *    'value'       => 'your_brand'
+		 *    'description' => 'Your Brand Login Screen',
+		 *    'css_url'     => 'https://example.edu/your_brand.css',
+		 *    'js_url'      => 'https://example.edu/your_brand.js',
 		 *   );
 		 *   array_push( $branding_options, $new_branding_option );
 		 *   return $branding_options;
@@ -80,7 +80,29 @@ class Login_Form extends Singleton {
 		 * add_filter( 'authorizer_add_branding_option', 'my_authorizer_add_branding_option' );
 		 */
 		$branding_options = array();
+
+		/**
+		 * Filter the branding options available in the "Advanced" tab of the
+		 * Authorizer settings page.
+		 *
+		 * @param @branding_options An array of branding options, each with keys 'value', 'description', 'css_url', and 'js_url'.
+		 */
 		$branding_options = apply_filters( 'authorizer_add_branding_option', $branding_options );
+
+		// Allow overriding the selected branding option from filter or constant.
+		if ( defined( 'AUTHORIZER_ADVANCED_BRANDING' ) ) {
+			$auth_settings['advanced_branding'] = \AUTHORIZER_ADVANCED_BRANDING;
+		}
+		/**
+		 * Filters the selected branding option value. Note: the selected branding
+		 * option value also needs to exist in the available options (via the
+		 * `authorizer_add_branding_option` filter above).
+		 *
+		 * @param string $advanced_branding The selected branding option value.
+		 * @param array  $branding_options  Existing branding options.
+		 */
+		$auth_settings['advanced_branding'] = apply_filters( 'authorizer_advanced_branding', $auth_settings['advanced_branding'], $branding_options );
+
 		foreach ( $branding_options as $branding_option ) {
 			// Make sure the custom brands have the required values.
 			if ( ! ( is_array( $branding_option ) && array_key_exists( 'value', $branding_option ) && array_key_exists( 'css_url', $branding_option ) && array_key_exists( 'js_url', $branding_option ) ) ) {
@@ -88,8 +110,7 @@ class Login_Form extends Singleton {
 			}
 			if ( $auth_settings['advanced_branding'] === $branding_option['value'] ) {
 				wp_enqueue_script( 'auth_login_custom_scripts-' . sanitize_title( $branding_option['value'] ), $branding_option['js_url'], array( 'jquery' ), '2.8.0', false );
-				wp_register_style( 'authorizer-login-custom-css-' . sanitize_title( $branding_option['value'] ), $branding_option['css_url'], array(), '2.8.0' );
-				wp_enqueue_style( 'authorizer-login-custom-css-' . sanitize_title( $branding_option['value'] ) );
+				wp_enqueue_style( 'authorizer-login-custom-css-' . sanitize_title( $branding_option['value'] ), $branding_option['css_url'], array(), '2.8.0' );
 			}
 		}
 	}
@@ -266,7 +287,7 @@ function signInCallback( credentialResponse ) { // jshint ignore:line
 				<?php endif; ?>
 			<?php endif; ?>
 
-			<?php if ( ( isset( $auth_settings['advanced_hide_wp_login'] ) && '1' === $auth_settings['advanced_hide_wp_login'] && isset( $_SERVER['QUERY_STRING'] ) && false === strpos( $_SERVER['QUERY_STRING'], 'external=wordpress' ) ) || ( isset( $auth_settings['advanced_disable_wp_login'] ) && '1' === $auth_settings['advanced_disable_wp_login'] && '1' !== $auth_settings['ldap'] && ( '1' === $auth_settings['cas'] || '1' === $auth_settings['google'] ) ) ) : // phpcs:ignore WordPress.Security.ValidatedSanitizedInput ?>
+			<?php if ( ( isset( $auth_settings['advanced_hide_wp_login'] ) && '1' === $auth_settings['advanced_hide_wp_login'] && isset( $_SERVER['QUERY_STRING'] ) && false === strpos( $_SERVER['QUERY_STRING'], 'external=wordpress' ) ) || ( isset( $auth_settings['advanced_disable_wp_login'] ) && '1' === $auth_settings['advanced_disable_wp_login'] && '1' !== $auth_settings['ldap'] && ( '1' === $auth_settings['cas'] || '1' === $auth_settings['google'] ) && ( empty( $auth_settings['advanced_disable_wp_login_bypass_usernames'] ) || ! isset( $_SERVER['QUERY_STRING'] ) || false === strpos( $_SERVER['QUERY_STRING'], 'external=wordpress' ) ) ) ) : // phpcs:ignore WordPress.Security.ValidatedSanitizedInput ?>
 				<style type="text/css">
 					body.login-action-login form {
 						padding-bottom: 8px;
@@ -596,6 +617,10 @@ function signInCallback( credentialResponse ) { // jshint ignore:line
 	 * least one external service is enabled. Note: don't hide the link if LDAP
 	 * logins are enabled and a custom lost password URL is provided.
 	 *
+	 * Note: if WordPress logins are disabled but there are bypass users, they
+	 * will not be able to reset their password (an administrator must do this for
+	 * them).
+	 *
 	 * Filter: lost_password_html_link
 	 */
 	public function maybe_hide_lost_password_link( $html_link ) {
@@ -628,6 +653,10 @@ function signInCallback( credentialResponse ) { // jshint ignore:line
 	 * Disable password reset form if WordPress logins are disabled and at least
 	 * one external service is enabled.
 	 *
+	 * Note: if WordPress logins are disabled but there are bypass users, they
+	 * will not be able to reset their password (an administrator must do this for
+	 * them).
+	 *
 	 * Action: lost_password
 	 */
 	public function maybe_hide_lost_password_form( $errors ) {
@@ -654,6 +683,10 @@ function signInCallback( credentialResponse ) { // jshint ignore:line
 	 * Ensure password retrieval emails are prevented from being sent if WordPress
 	 * logins are disabled and at least one external service is enabled.
 	 *
+	 * Note: if WordPress logins are disabled but there are bypass users, they
+	 * will not be able to reset their password (an administrator must do this for
+	 * them).
+	 *
 	 * Filter: lostpassword_errors
 	 */
 	public function maybe_prevent_password_reset( $errors ) {
@@ -672,7 +705,7 @@ function signInCallback( credentialResponse ) { // jshint ignore:line
 				'1' === $auth_settings['ldap']
 			)
 		) {
-			$errors->add( 'logins_disabled', __( '<strong>ERROR</strong>: The username field is empty.' ) );
+			$errors->add( 'logins_disabled', __( '<strong>ERROR</strong>: The username field is empty.', 'authorizer' ) );
 		}
 
 		return $errors;

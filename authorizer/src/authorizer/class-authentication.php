@@ -225,17 +225,31 @@ class Authentication extends Singleton {
 					'1' === $auth_settings['ldap']
 				)
 			) {
+				// Edge case: if WordPress logins are disabled but the username/email
+				// attempting to login has been added to the list of users allowed to
+				// bypass disabled logins, then allow the login (proceed to WordPress
+				// authentication).
+				if ( ! empty( $auth_settings['advanced_disable_wp_login_bypass_usernames'] ) ) {
+					$bypass_usernames = explode( "\n", str_replace( "\r", '', $auth_settings['advanced_disable_wp_login_bypass_usernames'] ) );
+					$bypass_users = get_users( array( 'login__in' => $bypass_usernames, 'count_total' => false ) );
+					foreach ( $bypass_users as $bypass_user ) {
+						if ( $bypass_user->user_login === $username || $bypass_user->user_email === $username ) {
+							return null;
+						}
+					}
+				}
+
 				remove_filter( 'authenticate', 'wp_authenticate_username_password', 20, 3 );
 				remove_filter( 'authenticate', 'wp_authenticate_email_password', 20, 3 );
 
 				$error = new \WP_Error();
 
 				if ( empty( $username ) ) {
-					$error->add( 'empty_username', __( '<strong>ERROR</strong>: The username field is empty.' ) );
+					$error->add( 'empty_username', __( '<strong>ERROR</strong>: The username field is empty.', 'authorizer' ) );
 				}
 
 				if ( empty( $password ) ) {
-					$error->add( 'empty_password', __( '<strong>ERROR</strong>: The password field is empty.' ) );
+					$error->add( 'empty_password', __( '<strong>ERROR</strong>: The password field is empty.', 'authorizer' ) );
 				}
 
 				return $error;
@@ -293,6 +307,13 @@ class Authentication extends Singleton {
 		if ( get_class( $result ) === 'WP_User' ) {
 			$user = $result;
 		}
+
+		// Integration: disable Cloudflare Turnstile verification from the
+		// simple-cloudflare-turnstile plugin if it is activated (conflicts with
+		// our redirects from external services). We assume that we dont't need bot
+		// protection from this plugin after coming back from a successful external
+		// service authentication.
+		add_filter( 'cfturnstile_widget_disable', '__return_true' );
 
 		// If we haven't exited yet, we have a valid/approved user, so authenticate them.
 		return $user;

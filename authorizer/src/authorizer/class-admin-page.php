@@ -145,7 +145,7 @@ class Admin_Page extends Singleton {
 			<p>' . __( '<strong>Limit invalid login attempts</strong>: Choose how soon (and for how long) to restrict access to individuals (or bots) making repeated invalid login attempts. You may set a shorter delay first, and then a longer delay after repeated invalid attempts; you may also set how much time must pass before the delays will be reset to normal.', 'authorizer' ) . '</p>
 			<p>' . __( '<strong>Hide WordPress Logins</strong>: If you want to hide the WordPress username and password fields and the Log In button on the wp-login screen, enable this option. Note: You can always access the WordPress logins by adding external=wordpress to the wp-login URL, like so:', 'authorizer' ) . ' <a href="' . wp_login_url() . '?external=wordpress" target="_blank">' . wp_login_url() . '?external=wordpress</a>.</p>
 			<p>' . __( '<strong>Disable WordPress Logins</strong>: If you want to prevent users from logging in with their WordPress passwords and instead only allow logins from external services, enable this option. Note: enabling this will also hide WordPress logins unless the LDAP external service is enabled.', 'authorizer' ) . '</p>
-			<p>' . __( "<strong>Custom WordPress login branding</strong>: If you'd like to use custom branding on the WordPress login page, select that here. You will need to use the `authorizer_add_branding_option` filter in your theme to add it. You can see an example theme that implements this filter in the plugin directory under sample-theme-add-branding.", 'authorizer' ) . '</p>
+			<p>' . __( "<strong>Custom WordPress login branding</strong>: If you'd like to use custom branding on the WordPress login page, select that here. You will need to use the <code>authorizer_add_branding_option</code> filter in your theme to add it. You can see an example theme that implements this filter in the plugin directory under sample-theme-add-branding.", 'authorizer' ) . ' ' . __( "Note: you can leave this field blank and instead define this value either in wp-config.php via <code>define( 'AUTHORIZER_ADVANCED_BRANDING', '...' );</code>, or you may set it in the <code>authorizer_advanced_branding</code> filter.", 'authorizer' ) .  '</p>
 		';
 		$screen->add_help_tab(
 			array(
@@ -828,6 +828,13 @@ class Admin_Page extends Singleton {
 			'auth_settings_advanced'
 		);
 		add_settings_field(
+			'auth_settings_advanced_disable_wp_login_bypass_usernames',
+			__( 'Bypass Usernames', 'authorizer' ),
+			array( Advanced::get_instance(), 'print_text_advanced_disable_wp_login_bypass_usernames' ),
+			'authorizer',
+			'auth_settings_advanced'
+		);
+		add_settings_field(
 			'auth_settings_advanced_branding',
 			__( 'Custom WordPress login branding', 'authorizer' ),
 			array( Advanced::get_instance(), 'print_radio_auth_advanced_branding' ),
@@ -1270,6 +1277,10 @@ class Admin_Page extends Singleton {
 							<td><?php $advanced->print_checkbox_auth_advanced_disable_wp_login( array( 'context' => Helper::NETWORK_CONTEXT ) ); ?></td>
 						</tr>
 						<tr>
+							<th scope="row"><?php esc_html_e( 'Bypass Usernames', 'authorizer' ); ?></th>
+							<td><?php $advanced->print_text_advanced_disable_wp_login_bypass_usernames( array( 'context' => Helper::NETWORK_CONTEXT ) ); ?></td>
+						</tr>
+						<tr>
 							<th scope="row"><?php esc_html_e( 'Number of users per page', 'authorizer' ); ?></th>
 							<td><?php $advanced->print_text_auth_advanced_users_per_page( array( 'context' => Helper::NETWORK_CONTEXT ) ); ?></td>
 						</tr>
@@ -1357,7 +1368,7 @@ class Admin_Page extends Singleton {
 	 * Action: admin_head-index.php
 	 */
 	public function load_options_page() {
-		wp_enqueue_script( 'authorizer', plugins_url( 'js/authorizer.js', plugin_root() ), array( 'jquery-effects-shake' ), '3.10.0', true );
+		wp_enqueue_script( 'authorizer', plugins_url( 'js/authorizer.js', plugin_root() ), array( 'jquery-effects-shake' ), '3.11.0', true );
 		wp_localize_script(
 			'authorizer',
 			'authL10n',
@@ -1373,10 +1384,10 @@ class Admin_Page extends Singleton {
 				'save_changes'         => esc_html__( 'Save Changes', 'authorizer' ),
 				'private_pages'        => esc_html__( 'Private Pages', 'authorizer' ),
 				'public_pages'         => esc_html__( 'Public Pages', 'authorizer' ),
-				'first_page'           => esc_html__( 'First page' ),
-				'previous_page'        => esc_html__( 'Previous page' ),
-				'next_page'            => esc_html__( 'Next page' ),
-				'last_page'            => esc_html__( 'Last page' ),
+				'first_page'           => esc_html__( 'First page', 'authorizer' ),
+				'previous_page'        => esc_html__( 'Previous page', 'authorizer' ),
+				'next_page'            => esc_html__( 'Next page', 'authorizer' ),
+				'last_page'            => esc_html__( 'Last page', 'authorizer' ),
 				'is_network_admin'     => is_network_admin() ? '1' : '0',
 			)
 		);

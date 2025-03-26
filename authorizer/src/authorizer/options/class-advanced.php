@@ -111,11 +111,67 @@ class Advanced extends \Authorizer\Singleton {
 	 * @param  string $args Args (e.g., multisite admin mode).
 	 * @return void
 	 */
+	public function print_text_advanced_disable_wp_login_bypass_usernames( $args = '' ) {
+		// Get plugin option.
+		$options              = Options::get_instance();
+		$option               = 'advanced_disable_wp_login_bypass_usernames';
+		$auth_settings_option = $options->get( $option, Helper::get_context( $args ), 'allow override', 'print overlay' );
+
+		// Print option elements.
+		?>
+		<textarea id="auth_settings_<?php echo esc_attr( $option ); ?>" name="auth_settings[<?php echo esc_attr( $option ); ?>]" placeholder="" style="width:220px;"><?php echo esc_html( $auth_settings_option ); ?></textarea>
+		<p class="description"><?php esc_html_e( 'If you have specific WordPress users that need to bypass disabled WordPress logins and use their WordPress credentials to log in, list them here, one username per line. Leave this field blank to prevent all users from using their WordPress credentials to log in.', 'authorizer' ); ?></p>
+		<?php
+	}
+
+
+	/**
+	 * Settings print callback.
+	 *
+	 * @param  string $args Args (e.g., multisite admin mode).
+	 * @return void
+	 */
 	public function print_radio_auth_advanced_branding( $args = '' ) {
 		// Get plugin option.
 		$options              = Options::get_instance();
 		$option               = 'advanced_branding';
 		$auth_settings_option = $options->get( $option );
+
+		// If branding option is overridden by filter or constant, don't expose the
+		// value; just print an informational message.
+		if ( has_filter( 'authorizer_advanced_branding' ) ) {
+			?>
+			<input type="hidden" id="auth_settings_<?php echo esc_attr( $option ); ?>" name="auth_settings[<?php echo esc_attr( $option ); ?>]" value="" />
+			<p class="description">
+				<?php
+				echo wp_kses_post(
+					sprintf(
+						/* TRANSLATORS: %s: authorizer_advanced_branding (filter name) */
+						__( 'This setting is not editable since it has been defined in the %s filter.', 'authorizer' ),
+						'<code>authorizer_advanced_branding</code>'
+					)
+				);
+				?>
+			</p>
+			<?php
+			return;
+		} elseif ( defined( 'AUTHORIZER_ADVANCED_BRANDING' ) ) {
+			?>
+			<input type="hidden" id="auth_settings_<?php echo esc_attr( $option ); ?>" name="auth_settings[<?php echo esc_attr( $option ); ?>]" value="" />
+			<p class="description">
+				<?php
+				echo wp_kses_post(
+					sprintf(
+						/* TRANSLATORS: %s: AUTHORIZER_ADVANCED_BRANDING (defined constant name) */
+						__( 'This setting is not editable since it has been defined in wp-config.php via %s', 'authorizer' ),
+						"<code>define( 'AUTHORIZER_ADVANCED_BRANDING', '...' );</code>"
+					)
+				);
+				?>
+			</p>
+			<?php
+			return;
+		}
 
 		// Print option elements.
 		?>
@@ -154,7 +210,7 @@ class Advanced extends \Authorizer\Singleton {
 			// Print message about adding custom brands if there are none.
 			if ( count( $branding_options ) === 0 ) {
 				?>
-				<p class="description"><?php echo wp_kses( __( '<strong>Note for theme developers</strong>: Add more options here by using the `authorizer_add_branding_option` filter in your theme. You can see an example theme that implements this filter in the plugin directory under sample-theme-add-branding.', 'authorizer' ), Helper::$allowed_html ); ?></p>
+				<p class="description"><?php echo wp_kses( __( '<strong>Note for theme developers</strong>: Add more options here by using the <code>authorizer_add_branding_option</code> filter in your theme. You can see an example theme that implements this filter in the plugin directory under sample-theme-add-branding.', 'authorizer' ), Helper::$allowed_html ) . ' ' . wp_kses( __( "Note: you can leave this field blank and instead define this value either in wp-config.php via <code>define( 'AUTHORIZER_ADVANCED_BRANDING', '...' );</code>, or you may set it in the <code>authorizer_advanced_branding</code> filter.", 'authorizer' ), Helper::$allowed_html ); ?></p>
 				<?php
 			}
 			?>
