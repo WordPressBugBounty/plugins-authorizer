@@ -1,8 +1,8 @@
 === Authorizer ===
 Contributors: figureone, the_magician, pkarjala, aargh-a-knot, elarequi, jojaba, slyraskal
 Tags: login, authentication, cas, ldap, oauth
-Tested up to: 6.7
-Stable tag: 3.11.0
+Tested up to: 6.9
+Stable tag: 3.13.4
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -41,9 +41,11 @@ If you add external=wordpress to the wp-login.php URL querystring, you can alway
 
 = Where is this plugin used? =
 
-The [University of Hawai'i][uh], which provides authentication for student, faculty, and staff members via a centralized service (CAS or LDAP).
+The [University of Hawai'i][http://hawaii.edu/], which provides authentication for student, faculty, and staff members via a centralized service (CAS or LDAP).
 
-[uh]: http://hawaii.edu/
+= Need a tutorial on how to set up Keycloak as an OAuth2 server to integrate with Authorizer?
+
+WordPress user @2brx2b has contributed a helpful one here: [https://wordpress.org/support/topic/tutorial-for-authorizer-keycloak/](https://wordpress.org/support/topic/tutorial-for-authorizer-keycloak/).
 
 == Screenshots ==
 
@@ -61,6 +63,46 @@ The [University of Hawai'i][uh], which provides authentication for student, facu
 12. Authorizer Option overridden by a Network Admin Option.
 
 == Changelog ==
+
+= 3.13.4 =
+* Performance: only autoload plugin options used on every page. The change will take effect the next time the specific option is updated (e.g., the list of Approved Users). Props @raalknz for the [suggestion](https://wordpress.org/support/topic/should-i-keep-authorizers-options-autoloaded/)!
+* Update composer dependencies: phpseclib/phpseclib (3.0.47 => 3.0.48).
+
+= 3.13.3 =
+* Fix Google logins on hosts with nonstandard PHP session configuration. Props oskarasriauba for the [report](https://github.com/uhm-coe/authorizer/issues/186)!
+* Update French translations. Props @julienlusson!
+
+= 3.13.2 =
+* Fix php warnings about new OIDC settings if settings have not been saved after updating to version 3.13.x.
+* Allow hiding WordPress logins if only an OAuth2 server is configured.
+
+= 3.13.1 =
+* Hotfix for some CAS logins no longer working after the latest update.
+
+= 3.13.0 =
+* Released Thu Dec 11, 2025.
+* Add ability to authenticate via OIDC servers. Props lc-sam for the [pull request](https://github.com/uhm-coe/authorizer/pull/180/)!
+* Fix linking CAS accounts by username on any additional configured CAS servers (previously only worked on the first CAS server).
+* Fix updating first/last names on login for any additional configured CAS/OAuth2/OIDC servers.
+* Update French translations. Props @julienlusson!
+* Update composer dependencies: league/oauth2-client (2.8.1 => 2.9.0).
+
+= 3.12.1 =
+* Restore original redirectUri (omit id=1 param) for already-configured OAuth2 servers. This fixes existing clients breaking because the redirectUri no longer matches after updating to Authorizer 3.12.1. Props mdebski for the [report](https://github.com/uhm-coe/authorizer/commit/f8155808e57679ecccd60d63785fe78111f99da5#r170993356)!
+
+= 3.12.0 =
+* Released Tue Nov 18, 2025.
+* Add setting to send pending user notification emails to individual users (instead of using the setting to send to all users in a role). Props lc-sam for the [suggestion](https://github.com/uhm-coe/authorizer/issues/175)!
+* Add ability to define multiple configured OAuth2 endpoints ([details](https://github.com/uhm-coe/authorizer/issues/172)).
+* Add ability to define the messages pending and blocked users see after logging in, and the message anonymous users see when visiting public pages on a private site, via filters (`authorizer_login_message_pending_users`, `authorizer_login_message_blocked_users`, and `authorizer_message_anonymous_users`) or wp-config.php constants (`define( 'AUTHORIZER_LOGIN_MESSAGE_PENDING_USERS', '...' );`, `define( 'AUTHORIZER_LOGIN_MESSAGE_BLOCKED_USERS', '...' );`, and `define( 'AUTHORIZER_MESSAGE_ANONYMOUS_USERS', '...' );`) to, e.g., allow a single custom message to be used on all sites in a multisite network. Props @monkeyleo13 for the [suggestion](https://wordpress.org/support/topic/global-blocked-pending-messages-subject-body/)!
+* Add Simple History logging on CAS authentication errors.
+* Add logging (Simple History, and error_log) on OAuth2 authentication errors.
+* Update French translations. Props @julienlusson!
+* Update composer dependencies guzzlehttp/guzzle (7.9.2 => 7.10.0), guzzlehttp/promises (2.0.4 => 2.3.0), guzzlehttp/psr7 (2.7.0 => 2.8.0), league/oauth2-client (2.7.0 => 2.8.1), paragonie/constant_time_encoding (v2.7.0 => v2.8.2), phpseclib/phpseclib (3.0.43 => 3.0.47).
+* Move OAuth2/Google/CAS/LDAP settings into separate tabs.
+* Fix redirect_to param discarded by some OAuth2 (generic) servers.
+* Fix typo in bypass usernames.
+* Tested up to WordPress 6.8.
 
 = 3.11.0 =
 * Fix for loading translations too early in WordPress 6.7.
@@ -320,6 +362,9 @@ monolog/monolog 1.26.0 => 1.26.1; paragonie/random_compat 2.0.19 => 2.0.20; phps
 * [Full changelog available here](https://github.com/uhm-coe/authorizer/blob/master/CHANGELOG.md)
 
 == Upgrade Notice ==
+
+= 3.12.1 =
+* Notice for OAuth2 users: if you modified the `redirectUri` in your server configuration to add the new `id=1` param after updating to version 3.12.0, this update reverts that change for already existing OAuth2 server configs. The first OAuth2 server configured will now omit the `id` querystring param. Please remove `&id=1` from the configured `redirectUri` on your external OAuth2 provider. Any additional configured OAuth2 servers (id=2, id=3, etc.) will have the param included, as shown in the helper text in Authorizer settings.
 
 = 3.5.0 =
 **Upgrade Notice**: Google Sign-Ins now use the new [Google Identity Services library](https://developers.google.com/identity/gsi/web/guides/migration), which uses a different Sign In button UI and may also include the One Tap prompt. Please test if you use Google Sign-Ins!

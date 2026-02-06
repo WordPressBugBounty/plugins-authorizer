@@ -169,20 +169,82 @@ class Options extends Singleton {
 				// Override external service (Oauth2) and associated options.
 				$auth_settings['oauth2']                      = $auth_multisite_settings['oauth2'];
 				$auth_settings['oauth2_auto_login']           = $auth_multisite_settings['oauth2_auto_login'] ?? '';
-				$auth_settings['oauth2_provider']             = $auth_multisite_settings['oauth2_provider'];
-				$auth_settings['oauth2_custom_label']         = $auth_multisite_settings['oauth2_custom_label'];
-				$auth_settings['oauth2_clientid']             = $auth_multisite_settings['oauth2_clientid'];
-				$auth_settings['oauth2_clientsecret']         = $auth_multisite_settings['oauth2_clientsecret'];
-				$auth_settings['oauth2_hosteddomain']         = $auth_multisite_settings['oauth2_hosteddomain'];
-				$auth_settings['oauth2_tenant_id']            = $auth_multisite_settings['oauth2_tenant_id'];
-				$auth_settings['oauth2_url_authorize']        = $auth_multisite_settings['oauth2_url_authorize'];
-				$auth_settings['oauth2_url_token']            = $auth_multisite_settings['oauth2_url_token'];
-				$auth_settings['oauth2_url_resource']         = $auth_multisite_settings['oauth2_url_resource'];
+				$auth_settings['oauth2_num_servers']          = $auth_multisite_settings['oauth2_num_servers'] ?? 1;
+				$auth_settings['oauth2_provider']             = $auth_multisite_settings['oauth2_provider'] ?? '';
+				$auth_settings['oauth2_custom_label']         = $auth_multisite_settings['oauth2_custom_label'] ?? 'OAuth2';
+				$auth_settings['oauth2_clientid']             = $auth_multisite_settings['oauth2_clientid'] ?? '';
+				$auth_settings['oauth2_clientsecret']         = $auth_multisite_settings['oauth2_clientsecret'] ?? '';
+				$auth_settings['oauth2_hosteddomain']         = $auth_multisite_settings['oauth2_hosteddomain'] ?? '';
+				$auth_settings['oauth2_tenant_id']            = $auth_multisite_settings['oauth2_tenant_id'] ?? '';
+				$auth_settings['oauth2_url_authorize']        = $auth_multisite_settings['oauth2_url_authorize'] ?? '';
+				$auth_settings['oauth2_url_token']            = $auth_multisite_settings['oauth2_url_token'] ?? '';
+				$auth_settings['oauth2_url_resource']         = $auth_multisite_settings['oauth2_url_resource'] ?? '';
 				$auth_settings['oauth2_attr_username']        = $auth_multisite_settings['oauth2_attr_username'] ?? '';
 				$auth_settings['oauth2_attr_email']           = $auth_multisite_settings['oauth2_attr_email'] ?? '';
 				$auth_settings['oauth2_attr_first_name']      = $auth_multisite_settings['oauth2_attr_first_name'] ?? '';
 				$auth_settings['oauth2_attr_last_name']       = $auth_multisite_settings['oauth2_attr_last_name'] ?? '';
 				$auth_settings['oauth2_attr_update_on_login'] = $auth_multisite_settings['oauth2_attr_update_on_login'] ?? '';
+				// Add any options for extra OAuth2 servers.
+				if ( ! empty( $auth_multisite_settings['oauth2_num_servers'] ) && intval( $auth_multisite_settings['oauth2_num_servers'] ) > 1 ) {
+					foreach ( range( 2, min( intval( $auth_multisite_settings['oauth2_num_servers'] ), 20 ) ) as $oauth2_num_server ) {
+						$auth_settings[ 'oauth2_provider_' . $oauth2_num_server ]             = $auth_multisite_settings[ 'oauth2_provider_' . $oauth2_num_server ] ?? '';
+						$auth_settings[ 'oauth2_custom_label_' . $oauth2_num_server ]         = $auth_multisite_settings[ 'oauth2_custom_label_' . $oauth2_num_server ] ?? 'OAuth2';
+						$auth_settings[ 'oauth2_clientid_' . $oauth2_num_server ]             = $auth_multisite_settings[ 'oauth2_clientid_' . $oauth2_num_server ] ?? '';
+						$auth_settings[ 'oauth2_clientsecret_' . $oauth2_num_server ]         = $auth_multisite_settings[ 'oauth2_clientsecret_' . $oauth2_num_server ] ?? '';
+						$auth_settings[ 'oauth2_hosteddomain_' . $oauth2_num_server ]         = $auth_multisite_settings[ 'oauth2_hosteddomain_' . $oauth2_num_server ] ?? '';
+						$auth_settings[ 'oauth2_tenant_id_' . $oauth2_num_server ]            = $auth_multisite_settings[ 'oauth2_tenant_id_' . $oauth2_num_server ] ?? '';
+						$auth_settings[ 'oauth2_url_authorize_' . $oauth2_num_server ]        = $auth_multisite_settings[ 'oauth2_url_authorize_' . $oauth2_num_server ] ?? '';
+						$auth_settings[ 'oauth2_url_token_' . $oauth2_num_server ]            = $auth_multisite_settings[ 'oauth2_url_token_' . $oauth2_num_server ] ?? '';
+						$auth_settings[ 'oauth2_url_resource_' . $oauth2_num_server ]         = $auth_multisite_settings[ 'oauth2_url_resource_' . $oauth2_num_server ] ?? '';
+						$auth_settings[ 'oauth2_attr_username_' . $oauth2_num_server ]        = $auth_multisite_settings[ 'oauth2_attr_username_' . $oauth2_num_server ] ?? '';
+						$auth_settings[ 'oauth2_attr_email_' . $oauth2_num_server ]           = $auth_multisite_settings[ 'oauth2_attr_email_' . $oauth2_num_server ] ?? '';
+						$auth_settings[ 'oauth2_attr_first_name_' . $oauth2_num_server ]      = $auth_multisite_settings[ 'oauth2_attr_first_name_' . $oauth2_num_server ] ?? '';
+						$auth_settings[ 'oauth2_attr_last_name_' . $oauth2_num_server ]       = $auth_multisite_settings[ 'oauth2_attr_last_name_' . $oauth2_num_server ] ?? '';
+						$auth_settings[ 'oauth2_attr_update_on_login_' . $oauth2_num_server ] = $auth_multisite_settings[ 'oauth2_attr_update_on_login_' . $oauth2_num_server ] ?? '';
+					}
+				}
+
+				// Override external service (OIDC) and associated options.
+				$auth_settings['oidc']                        = $auth_multisite_settings['oidc'] ?? '';
+				$auth_settings['oidc_num_servers']            = $auth_multisite_settings['oidc_num_servers'] ?? 1;
+				$auth_settings['oidc_auto_login']             = $auth_multisite_settings['oidc_auto_login'] ?? '';
+				$auth_settings['oidc_custom_label']           = $auth_multisite_settings['oidc_custom_label'] ?? 'OIDC';
+				$auth_settings['oidc_issuer']                 = $auth_multisite_settings['oidc_issuer'] ?? '';
+				$auth_settings['oidc_client_id']              = $auth_multisite_settings['oidc_client_id'] ?? '';
+				$auth_settings['oidc_client_secret']          = $auth_multisite_settings['oidc_client_secret'] ?? '';
+				$auth_settings['oidc_scopes']                 = $auth_multisite_settings['oidc_scopes'] ?? 'openid email profile';
+				$auth_settings['oidc_prompt']                 = $auth_multisite_settings['oidc_prompt'] ?? '';
+				$auth_settings['oidc_login_hint']             = $auth_multisite_settings['oidc_login_hint'] ?? '';
+				$auth_settings['oidc_max_age']                = $auth_multisite_settings['oidc_max_age'] ?? '';
+				$auth_settings['oidc_attr_username']          = $auth_multisite_settings['oidc_attr_username'] ?? 'preferred_username';
+				$auth_settings['oidc_attr_email']             = $auth_multisite_settings['oidc_attr_email'] ?? 'email';
+				$auth_settings['oidc_attr_first_name']        = $auth_multisite_settings['oidc_attr_first_name'] ?? 'given_name';
+				$auth_settings['oidc_attr_last_name']         = $auth_multisite_settings['oidc_attr_last_name'] ?? 'family_name';
+				$auth_settings['oidc_attr_update_on_login']   = $auth_multisite_settings['oidc_attr_update_on_login'] ?? '';
+				$auth_settings['oidc_require_verified_email'] = $auth_multisite_settings['oidc_require_verified_email'] ?? '';
+				$auth_settings['oidc_link_on_username']       = $auth_multisite_settings['oidc_link_on_username'] ?? '';
+				$auth_settings['oidc_hosteddomain']           = $auth_multisite_settings['oidc_hosteddomain'] ?? '';
+				// Add any options for extra OIDC servers.
+				if ( ! empty( $auth_multisite_settings['oidc_num_servers'] ) && intval( $auth_multisite_settings['oidc_num_servers'] ) > 1 ) {
+					foreach ( range( 2, min( intval( $auth_multisite_settings['oidc_num_servers'] ), 20 ) ) as $oidc_num_server ) {
+						$auth_settings[ 'oidc_custom_label_' . $oidc_num_server ]           = $auth_multisite_settings[ 'oidc_custom_label_' . $oidc_num_server ] ?? 'OIDC';
+						$auth_settings[ 'oidc_issuer_' . $oidc_num_server ]                 = $auth_multisite_settings[ 'oidc_issuer_' . $oidc_num_server ] ?? '';
+						$auth_settings[ 'oidc_client_id_' . $oidc_num_server ]              = $auth_multisite_settings[ 'oidc_client_id_' . $oidc_num_server ] ?? '';
+						$auth_settings[ 'oidc_client_secret_' . $oidc_num_server ]          = $auth_multisite_settings[ 'oidc_client_secret_' . $oidc_num_server ] ?? '';
+						$auth_settings[ 'oidc_scopes_' . $oidc_num_server ]                 = $auth_multisite_settings[ 'oidc_scopes_' . $oidc_num_server ] ?? 'openid email profile';
+						$auth_settings[ 'oidc_prompt_' . $oidc_num_server ]                 = $auth_multisite_settings[ 'oidc_prompt_' . $oidc_num_server ] ?? '';
+						$auth_settings[ 'oidc_login_hint_' . $oidc_num_server ]             = $auth_multisite_settings[ 'oidc_login_hint_' . $oidc_num_server ] ?? '';
+						$auth_settings[ 'oidc_max_age_' . $oidc_num_server ]                = $auth_multisite_settings[ 'oidc_max_age_' . $oidc_num_server ] ?? '';
+						$auth_settings[ 'oidc_attr_username_' . $oidc_num_server ]          = $auth_multisite_settings[ 'oidc_attr_username_' . $oidc_num_server ] ?? 'preferred_username';
+						$auth_settings[ 'oidc_attr_email_' . $oidc_num_server ]             = $auth_multisite_settings[ 'oidc_attr_email_' . $oidc_num_server ] ?? 'email';
+						$auth_settings[ 'oidc_attr_first_name_' . $oidc_num_server ]        = $auth_multisite_settings[ 'oidc_attr_first_name_' . $oidc_num_server ] ?? 'given_name';
+						$auth_settings[ 'oidc_attr_last_name_' . $oidc_num_server ]         = $auth_multisite_settings[ 'oidc_attr_last_name_' . $oidc_num_server ] ?? 'family_name';
+						$auth_settings[ 'oidc_attr_update_on_login_' . $oidc_num_server ]   = $auth_multisite_settings[ 'oidc_attr_update_on_login_' . $oidc_num_server ] ?? '';
+						$auth_settings[ 'oidc_require_verified_email_' . $oidc_num_server ] = $auth_multisite_settings[ 'oidc_require_verified_email_' . $oidc_num_server ] ?? '';
+						$auth_settings[ 'oidc_link_on_username_' . $oidc_num_server ]       = $auth_multisite_settings[ 'oidc_link_on_username_' . $oidc_num_server ] ?? '';
+						$auth_settings[ 'oidc_hosteddomain_' . $oidc_num_server ]           = $auth_multisite_settings[ 'oidc_hosteddomain_' . $oidc_num_server ] ?? '';
+					}
+				}
 
 				// Override external service (Google) and associated options.
 				$auth_settings['google']              = $auth_multisite_settings['google'];
@@ -323,6 +385,9 @@ class Options extends Singleton {
 		if ( ! array_key_exists( 'access_role_receive_pending_emails', $auth_settings ) ) {
 			$auth_settings['access_role_receive_pending_emails'] = '---';
 		}
+		if ( ! array_key_exists( 'access_users_receive_pending_emails', $auth_settings ) ) {
+			$auth_settings['access_users_receive_pending_emails'] = array();
+		}
 		if ( ! array_key_exists( 'access_pending_redirect_to_message', $auth_settings ) ) {
 			$auth_settings['access_pending_redirect_to_message'] = '<p>' . __( "You're not currently allowed to view this site. Your administrator has been notified, and once he/she has approved your request, you will be able to log in. If you need any other help, please contact your administrator.", 'authorizer' ) . '</p>';
 		}
@@ -382,26 +447,12 @@ class Options extends Singleton {
 		if ( ! array_key_exists( 'oauth2', $auth_settings ) ) {
 			$auth_settings['oauth2'] = '';
 		}
-		if ( ! array_key_exists( 'google', $auth_settings ) ) {
-			$auth_settings['google'] = '';
+		if ( ! array_key_exists( 'oauth2_auto_login', $auth_settings ) ) {
+			$auth_settings['oauth2_auto_login'] = '';
 		}
-		if ( ! array_key_exists( 'cas', $auth_settings ) ) {
-			$auth_settings['cas'] = '';
+		if ( ! array_key_exists( 'oauth2_num_servers', $auth_settings ) ) {
+			$auth_settings['oauth2_num_servers'] = '1';
 		}
-		if ( ! array_key_exists( 'ldap', $auth_settings ) ) {
-			$auth_settings['ldap'] = '';
-		}
-
-		if ( ! array_key_exists( 'google_clientid', $auth_settings ) ) {
-			$auth_settings['google_clientid'] = '';
-		}
-		if ( ! array_key_exists( 'google_clientsecret', $auth_settings ) ) {
-			$auth_settings['google_clientsecret'] = '';
-		}
-		if ( ! array_key_exists( 'google_hosteddomain', $auth_settings ) ) {
-			$auth_settings['google_hosteddomain'] = '';
-		}
-
 		if ( ! array_key_exists( 'oauth2_provider', $auth_settings ) ) {
 			$auth_settings['oauth2_provider'] = '';
 		}
@@ -444,10 +495,181 @@ class Options extends Singleton {
 		if ( ! array_key_exists( 'oauth2_attr_update_on_login', $auth_settings ) ) {
 			$auth_settings['oauth2_attr_update_on_login'] = '';
 		}
-		if ( ! array_key_exists( 'oauth2_auto_login', $auth_settings ) ) {
-			$auth_settings['oauth2_auto_login'] = '';
+		if ( intval( $auth_settings['oauth2_num_servers'] ) > 1 ) {
+			foreach ( range( 2, min( intval( $auth_settings['oauth2_num_servers'] ), 20 ) ) as $oauth2_num_server ) {
+				if ( ! array_key_exists( 'oauth2_provider_' . $oauth2_num_server, $auth_settings ) ) {
+					$auth_settings[ 'oauth2_provider_' . $oauth2_num_server ] = '';
+				}
+				if ( ! array_key_exists( 'oauth2_custom_label_' . $oauth2_num_server, $auth_settings ) ) {
+					$auth_settings[ 'oauth2_custom_label_' . $oauth2_num_server ] = 'OAuth2';
+				}
+				if ( ! array_key_exists( 'oauth2_clientid_' . $oauth2_num_server, $auth_settings ) ) {
+					$auth_settings[ 'oauth2_clientid_' . $oauth2_num_server ] = '';
+				}
+				if ( ! array_key_exists( 'oauth2_clientsecret_' . $oauth2_num_server, $auth_settings ) ) {
+					$auth_settings[ 'oauth2_clientsecret_' . $oauth2_num_server ] = '';
+				}
+				if ( ! array_key_exists( 'oauth2_hosteddomain_' . $oauth2_num_server, $auth_settings ) ) {
+					$auth_settings[ 'oauth2_hosteddomain_' . $oauth2_num_server ] = '';
+				}
+				if ( ! array_key_exists( 'oauth2_tenant_id_' . $oauth2_num_server, $auth_settings ) ) {
+					$auth_settings[ 'oauth2_tenant_id_' . $oauth2_num_server ] = 'common';
+				}
+				if ( ! array_key_exists( 'oauth2_url_authorize_' . $oauth2_num_server, $auth_settings ) ) {
+					$auth_settings[ 'oauth2_url_authorize_' . $oauth2_num_server ] = '';
+				}
+				if ( ! array_key_exists( 'oauth2_url_token_' . $oauth2_num_server, $auth_settings ) ) {
+					$auth_settings[ 'oauth2_url_token_' . $oauth2_num_server ] = '';
+				}
+				if ( ! array_key_exists( 'oauth2_url_resource_' . $oauth2_num_server, $auth_settings ) ) {
+					$auth_settings[ 'oauth2_url_resource_' . $oauth2_num_server ] = '';
+				}
+				if ( ! array_key_exists( 'oauth2_attr_username_' . $oauth2_num_server, $auth_settings ) ) {
+					$auth_settings[ 'oauth2_attr_username_' . $oauth2_num_server ] = '';
+				}
+				if ( ! array_key_exists( 'oauth2_attr_email_' . $oauth2_num_server, $auth_settings ) ) {
+					$auth_settings[ 'oauth2_attr_email_' . $oauth2_num_server ] = '';
+				}
+				if ( ! array_key_exists( 'oauth2_attr_first_name_' . $oauth2_num_server, $auth_settings ) ) {
+					$auth_settings[ 'oauth2_attr_first_name_' . $oauth2_num_server ] = '';
+				}
+				if ( ! array_key_exists( 'oauth2_attr_last_name_' . $oauth2_num_server, $auth_settings ) ) {
+					$auth_settings[ 'oauth2_attr_last_name_' . $oauth2_num_server ] = '';
+				}
+				if ( ! array_key_exists( 'oauth2_attr_update_on_login_' . $oauth2_num_server, $auth_settings ) ) {
+					$auth_settings[ 'oauth2_attr_update_on_login_' . $oauth2_num_server ] = '';
+				}
+			}
 		}
 
+		if ( ! array_key_exists( 'oidc', $auth_settings ) ) {
+			$auth_settings['oidc'] = '';
+		}
+		if ( ! array_key_exists( 'oidc_custom_label', $auth_settings ) ) {
+			$auth_settings['oidc_custom_label'] = 'OIDC';
+		}
+		if ( ! array_key_exists( 'oidc_issuer', $auth_settings ) ) {
+			$auth_settings['oidc_issuer'] = '';
+		}
+		if ( ! array_key_exists( 'oidc_client_id', $auth_settings ) ) {
+			$auth_settings['oidc_client_id'] = '';
+		}
+		if ( ! array_key_exists( 'oidc_client_secret', $auth_settings ) ) {
+			$auth_settings['oidc_client_secret'] = '';
+		}
+		if ( ! array_key_exists( 'oidc_scopes', $auth_settings ) ) {
+			$auth_settings['oidc_scopes'] = 'openid email profile';
+		}
+		if ( ! array_key_exists( 'oidc_prompt', $auth_settings ) ) {
+			$auth_settings['oidc_prompt'] = '';
+		}
+		if ( ! array_key_exists( 'oidc_login_hint', $auth_settings ) ) {
+			$auth_settings['oidc_login_hint'] = '';
+		}
+		if ( ! array_key_exists( 'oidc_max_age', $auth_settings ) ) {
+			$auth_settings['oidc_max_age'] = '';
+		}
+		if ( ! array_key_exists( 'oidc_attr_username', $auth_settings ) ) {
+			$auth_settings['oidc_attr_username'] = 'preferred_username';
+		}
+		if ( ! array_key_exists( 'oidc_attr_email', $auth_settings ) ) {
+			$auth_settings['oidc_attr_email'] = 'email';
+		}
+		if ( ! array_key_exists( 'oidc_attr_first_name', $auth_settings ) ) {
+			$auth_settings['oidc_attr_first_name'] = 'given_name';
+		}
+		if ( ! array_key_exists( 'oidc_attr_last_name', $auth_settings ) ) {
+			$auth_settings['oidc_attr_last_name'] = 'family_name';
+		}
+		if ( ! array_key_exists( 'oidc_attr_update_on_login', $auth_settings ) ) {
+			$auth_settings['oidc_attr_update_on_login'] = '';
+		}
+		if ( ! array_key_exists( 'oidc_require_verified_email', $auth_settings ) ) {
+			$auth_settings['oidc_require_verified_email'] = '';
+		}
+		if ( ! array_key_exists( 'oidc_link_on_username', $auth_settings ) ) {
+			$auth_settings['oidc_link_on_username'] = '';
+		}
+		if ( ! array_key_exists( 'oidc_hosteddomain', $auth_settings ) ) {
+			$auth_settings['oidc_hosteddomain'] = '';
+		}
+		if ( ! array_key_exists( 'oidc_num_servers', $auth_settings ) ) {
+			$auth_settings['oidc_num_servers'] = '1';
+		}
+		if ( ! array_key_exists( 'oidc_auto_login', $auth_settings ) ) {
+			$auth_settings['oidc_auto_login'] = '';
+		}
+
+		// Add any options for extra OIDC servers.
+		if ( intval( $auth_settings['oidc_num_servers'] ) > 1 ) {
+			foreach ( range( 2, min( intval( $auth_settings['oidc_num_servers'] ), 20 ) ) as $oidc_num_server ) {
+				if ( ! array_key_exists( 'oidc_custom_label_' . $oidc_num_server, $auth_settings ) ) {
+					$auth_settings[ 'oidc_custom_label_' . $oidc_num_server ] = 'OIDC';
+				}
+				if ( ! array_key_exists( 'oidc_issuer_' . $oidc_num_server, $auth_settings ) ) {
+					$auth_settings[ 'oidc_issuer_' . $oidc_num_server ] = '';
+				}
+				if ( ! array_key_exists( 'oidc_client_id_' . $oidc_num_server, $auth_settings ) ) {
+					$auth_settings[ 'oidc_client_id_' . $oidc_num_server ] = '';
+				}
+				if ( ! array_key_exists( 'oidc_client_secret_' . $oidc_num_server, $auth_settings ) ) {
+					$auth_settings[ 'oidc_client_secret_' . $oidc_num_server ] = '';
+				}
+				if ( ! array_key_exists( 'oidc_scopes_' . $oidc_num_server, $auth_settings ) ) {
+					$auth_settings[ 'oidc_scopes_' . $oidc_num_server ] = 'openid email profile';
+				}
+				if ( ! array_key_exists( 'oidc_prompt_' . $oidc_num_server, $auth_settings ) ) {
+					$auth_settings[ 'oidc_prompt_' . $oidc_num_server ] = '';
+				}
+				if ( ! array_key_exists( 'oidc_login_hint_' . $oidc_num_server, $auth_settings ) ) {
+					$auth_settings[ 'oidc_login_hint_' . $oidc_num_server ] = '';
+				}
+				if ( ! array_key_exists( 'oidc_max_age_' . $oidc_num_server, $auth_settings ) ) {
+					$auth_settings[ 'oidc_max_age_' . $oidc_num_server ] = '';
+				}
+				if ( ! array_key_exists( 'oidc_attr_username_' . $oidc_num_server, $auth_settings ) ) {
+					$auth_settings[ 'oidc_attr_username_' . $oidc_num_server ] = 'preferred_username';
+				}
+				if ( ! array_key_exists( 'oidc_attr_email_' . $oidc_num_server, $auth_settings ) ) {
+					$auth_settings[ 'oidc_attr_email_' . $oidc_num_server ] = 'email';
+				}
+				if ( ! array_key_exists( 'oidc_attr_first_name_' . $oidc_num_server, $auth_settings ) ) {
+					$auth_settings[ 'oidc_attr_first_name_' . $oidc_num_server ] = 'given_name';
+				}
+				if ( ! array_key_exists( 'oidc_attr_last_name_' . $oidc_num_server, $auth_settings ) ) {
+					$auth_settings[ 'oidc_attr_last_name_' . $oidc_num_server ] = 'family_name';
+				}
+				if ( ! array_key_exists( 'oidc_attr_update_on_login_' . $oidc_num_server, $auth_settings ) ) {
+					$auth_settings[ 'oidc_attr_update_on_login_' . $oidc_num_server ] = '';
+				}
+				if ( ! array_key_exists( 'oidc_require_verified_email_' . $oidc_num_server, $auth_settings ) ) {
+					$auth_settings[ 'oidc_require_verified_email_' . $oidc_num_server ] = '';
+				}
+				if ( ! array_key_exists( 'oidc_link_on_username_' . $oidc_num_server, $auth_settings ) ) {
+					$auth_settings[ 'oidc_link_on_username_' . $oidc_num_server ] = '';
+				}
+				if ( ! array_key_exists( 'oidc_hosteddomain_' . $oidc_num_server, $auth_settings ) ) {
+					$auth_settings[ 'oidc_hosteddomain_' . $oidc_num_server ] = '';
+				}
+			}
+		}
+
+		if ( ! array_key_exists( 'google', $auth_settings ) ) {
+			$auth_settings['google'] = '';
+		}
+		if ( ! array_key_exists( 'google_clientid', $auth_settings ) ) {
+			$auth_settings['google_clientid'] = '';
+		}
+		if ( ! array_key_exists( 'google_clientsecret', $auth_settings ) ) {
+			$auth_settings['google_clientsecret'] = '';
+		}
+		if ( ! array_key_exists( 'google_hosteddomain', $auth_settings ) ) {
+			$auth_settings['google_hosteddomain'] = '';
+		}
+
+		if ( ! array_key_exists( 'cas', $auth_settings ) ) {
+			$auth_settings['cas'] = '';
+		}
 		if ( ! array_key_exists( 'cas_auto_login', $auth_settings ) ) {
 			$auth_settings['cas_auto_login'] = '';
 		}
@@ -525,6 +747,9 @@ class Options extends Singleton {
 			}
 		}
 
+		if ( ! array_key_exists( 'ldap', $auth_settings ) ) {
+			$auth_settings['ldap'] = '';
+		}
 		if ( ! array_key_exists( 'ldap_host', $auth_settings ) ) {
 			$auth_settings['ldap_host'] = '';
 		}
@@ -613,10 +838,10 @@ class Options extends Singleton {
 		}
 
 		// Save default options to database.
-		update_option( 'auth_settings', $auth_settings );
-		update_option( 'auth_settings_access_users_pending', $auth_settings_access_users_pending );
-		update_option( 'auth_settings_access_users_approved', $auth_settings_access_users_approved );
-		update_option( 'auth_settings_access_users_blocked', $auth_settings_access_users_blocked );
+		update_option( 'auth_settings', $auth_settings, true );
+		update_option( 'auth_settings_access_users_pending', $auth_settings_access_users_pending, false );
+		update_option( 'auth_settings_access_users_approved', $auth_settings_access_users_approved, false );
+		update_option( 'auth_settings_access_users_blocked', $auth_settings_access_users_blocked, false );
 
 		// Multisite defaults.
 		if ( is_multisite() && $args['set_multisite_options'] ) {
@@ -661,14 +886,11 @@ class Options extends Singleton {
 			if ( ! array_key_exists( 'oauth2', $auth_multisite_settings ) ) {
 				$auth_multisite_settings['oauth2'] = '';
 			}
-			if ( ! array_key_exists( 'google', $auth_multisite_settings ) ) {
-				$auth_multisite_settings['google'] = '';
+			if ( ! array_key_exists( 'oauth2_auto_login', $auth_multisite_settings ) ) {
+				$auth_multisite_settings['oauth2_auto_login'] = '';
 			}
-			if ( ! array_key_exists( 'cas', $auth_multisite_settings ) ) {
-				$auth_multisite_settings['cas'] = '';
-			}
-			if ( ! array_key_exists( 'ldap', $auth_multisite_settings ) ) {
-				$auth_multisite_settings['ldap'] = '';
+			if ( ! array_key_exists( 'oauth2_num_servers', $auth_multisite_settings ) ) {
+				$auth_multisite_settings['oauth2_num_servers'] = '1';
 			}
 			if ( ! array_key_exists( 'oauth2_provider', $auth_multisite_settings ) ) {
 				$auth_multisite_settings['oauth2_provider'] = '';
@@ -712,8 +934,163 @@ class Options extends Singleton {
 			if ( ! array_key_exists( 'oauth2_attr_update_on_login', $auth_multisite_settings ) ) {
 				$auth_multisite_settings['oauth2_attr_update_on_login'] = '';
 			}
-			if ( ! array_key_exists( 'oauth2_auto_login', $auth_multisite_settings ) ) {
-				$auth_multisite_settings['oauth2_auto_login'] = '';
+			if ( intval( $auth_multisite_settings['oauth2_num_servers'] ) > 1 ) {
+				foreach ( range( 2, min( intval( $auth_multisite_settings['oauth2_num_servers'] ), 20 ) ) as $oauth2_num_server ) {
+					if ( ! array_key_exists( 'oauth2_provider_' . $oauth2_num_server, $auth_multisite_settings ) ) {
+						$auth_multisite_settings[ 'oauth2_provider_' . $oauth2_num_server ] = '';
+					}
+					if ( ! array_key_exists( 'oauth2_custom_label_' . $oauth2_num_server, $auth_multisite_settings ) ) {
+						$auth_multisite_settings[ 'oauth2_custom_label_' . $oauth2_num_server ] = 'OAuth2';
+					}
+					if ( ! array_key_exists( 'oauth2_clientid_' . $oauth2_num_server, $auth_multisite_settings ) ) {
+						$auth_multisite_settings[ 'oauth2_clientid_' . $oauth2_num_server ] = '';
+					}
+					if ( ! array_key_exists( 'oauth2_clientsecret_' . $oauth2_num_server, $auth_multisite_settings ) ) {
+						$auth_multisite_settings[ 'oauth2_clientsecret_' . $oauth2_num_server ] = '';
+					}
+					if ( ! array_key_exists( 'oauth2_hosteddomain_' . $oauth2_num_server, $auth_multisite_settings ) ) {
+						$auth_multisite_settings[ 'oauth2_hosteddomain_' . $oauth2_num_server ] = '';
+					}
+					if ( ! array_key_exists( 'oauth2_tenant_id_' . $oauth2_num_server, $auth_multisite_settings ) ) {
+						$auth_multisite_settings[ 'oauth2_tenant_id_' . $oauth2_num_server ] = 'common';
+					}
+					if ( ! array_key_exists( 'oauth2_url_authorize_' . $oauth2_num_server, $auth_multisite_settings ) ) {
+						$auth_multisite_settings[ 'oauth2_url_authorize_' . $oauth2_num_server ] = '';
+					}
+					if ( ! array_key_exists( 'oauth2_url_token_' . $oauth2_num_server, $auth_multisite_settings ) ) {
+						$auth_multisite_settings[ 'oauth2_url_token_' . $oauth2_num_server ] = '';
+					}
+					if ( ! array_key_exists( 'oauth2_url_resource_' . $oauth2_num_server, $auth_multisite_settings ) ) {
+						$auth_multisite_settings[ 'oauth2_url_resource_' . $oauth2_num_server ] = '';
+					}
+					if ( ! array_key_exists( 'oauth2_attr_username_' . $oauth2_num_server, $auth_multisite_settings ) ) {
+						$auth_multisite_settings[ 'oauth2_attr_username_' . $oauth2_num_server ] = '';
+					}
+					if ( ! array_key_exists( 'oauth2_attr_email_' . $oauth2_num_server, $auth_multisite_settings ) ) {
+						$auth_multisite_settings[ 'oauth2_attr_email_' . $oauth2_num_server ] = '';
+					}
+					if ( ! array_key_exists( 'oauth2_attr_first_name_' . $oauth2_num_server, $auth_multisite_settings ) ) {
+						$auth_multisite_settings[ 'oauth2_attr_first_name_' . $oauth2_num_server ] = '';
+					}
+					if ( ! array_key_exists( 'oauth2_attr_last_name_' . $oauth2_num_server, $auth_multisite_settings ) ) {
+						$auth_multisite_settings[ 'oauth2_attr_last_name_' . $oauth2_num_server ] = '';
+					}
+					if ( ! array_key_exists( 'oauth2_attr_update_on_login_' . $oauth2_num_server, $auth_multisite_settings ) ) {
+						$auth_multisite_settings[ 'oauth2_attr_update_on_login_' . $oauth2_num_server ] = '';
+					}
+				}
+			}
+			if ( ! array_key_exists( 'oidc', $auth_multisite_settings ) ) {
+				$auth_multisite_settings['oidc'] = '';
+			}
+			if ( ! array_key_exists( 'oidc_num_servers', $auth_multisite_settings ) ) {
+				$auth_multisite_settings['oidc_num_servers'] = '1';
+			}
+			if ( ! array_key_exists( 'oidc_auto_login', $auth_multisite_settings ) ) {
+				$auth_multisite_settings['oidc_auto_login'] = '';
+			}
+			if ( ! array_key_exists( 'oidc_custom_label', $auth_multisite_settings ) ) {
+				$auth_multisite_settings['oidc_custom_label'] = 'OIDC';
+			}
+			if ( ! array_key_exists( 'oidc_issuer', $auth_multisite_settings ) ) {
+				$auth_multisite_settings['oidc_issuer'] = '';
+			}
+			if ( ! array_key_exists( 'oidc_client_id', $auth_multisite_settings ) ) {
+				$auth_multisite_settings['oidc_client_id'] = '';
+			}
+			if ( ! array_key_exists( 'oidc_client_secret', $auth_multisite_settings ) ) {
+				$auth_multisite_settings['oidc_client_secret'] = '';
+			}
+			if ( ! array_key_exists( 'oidc_scopes', $auth_multisite_settings ) ) {
+				$auth_multisite_settings['oidc_scopes'] = 'openid email profile';
+			}
+			if ( ! array_key_exists( 'oidc_prompt', $auth_multisite_settings ) ) {
+				$auth_multisite_settings['oidc_prompt'] = '';
+			}
+			if ( ! array_key_exists( 'oidc_login_hint', $auth_multisite_settings ) ) {
+				$auth_multisite_settings['oidc_login_hint'] = '';
+			}
+			if ( ! array_key_exists( 'oidc_max_age', $auth_multisite_settings ) ) {
+				$auth_multisite_settings['oidc_max_age'] = '';
+			}
+			if ( ! array_key_exists( 'oidc_attr_username', $auth_multisite_settings ) ) {
+				$auth_multisite_settings['oidc_attr_username'] = 'preferred_username';
+			}
+			if ( ! array_key_exists( 'oidc_attr_email', $auth_multisite_settings ) ) {
+				$auth_multisite_settings['oidc_attr_email'] = 'email';
+			}
+			if ( ! array_key_exists( 'oidc_attr_first_name', $auth_multisite_settings ) ) {
+				$auth_multisite_settings['oidc_attr_first_name'] = 'given_name';
+			}
+			if ( ! array_key_exists( 'oidc_attr_last_name', $auth_multisite_settings ) ) {
+				$auth_multisite_settings['oidc_attr_last_name'] = 'family_name';
+			}
+			if ( ! array_key_exists( 'oidc_attr_update_on_login', $auth_multisite_settings ) ) {
+				$auth_multisite_settings['oidc_attr_update_on_login'] = '';
+			}
+			if ( ! array_key_exists( 'oidc_require_verified_email', $auth_multisite_settings ) ) {
+				$auth_multisite_settings['oidc_require_verified_email'] = '';
+			}
+			if ( ! array_key_exists( 'oidc_link_on_username', $auth_multisite_settings ) ) {
+				$auth_multisite_settings['oidc_link_on_username'] = '';
+			}
+			if ( ! array_key_exists( 'oidc_hosteddomain', $auth_multisite_settings ) ) {
+				$auth_multisite_settings['oidc_hosteddomain'] = '';
+			}
+			if ( intval( $auth_multisite_settings['oidc_num_servers'] ) > 1 ) {
+				foreach ( range( 2, min( intval( $auth_multisite_settings['oidc_num_servers'] ), 20 ) ) as $oidc_num_server ) {
+					if ( ! array_key_exists( 'oidc_custom_label_' . $oidc_num_server, $auth_multisite_settings ) ) {
+						$auth_multisite_settings[ 'oidc_custom_label_' . $oidc_num_server ] = 'OIDC';
+					}
+					if ( ! array_key_exists( 'oidc_issuer_' . $oidc_num_server, $auth_multisite_settings ) ) {
+						$auth_multisite_settings[ 'oidc_issuer_' . $oidc_num_server ] = '';
+					}
+					if ( ! array_key_exists( 'oidc_client_id_' . $oidc_num_server, $auth_multisite_settings ) ) {
+						$auth_multisite_settings[ 'oidc_client_id_' . $oidc_num_server ] = '';
+					}
+					if ( ! array_key_exists( 'oidc_client_secret_' . $oidc_num_server, $auth_multisite_settings ) ) {
+						$auth_multisite_settings[ 'oidc_client_secret_' . $oidc_num_server ] = '';
+					}
+					if ( ! array_key_exists( 'oidc_scopes_' . $oidc_num_server, $auth_multisite_settings ) ) {
+						$auth_multisite_settings[ 'oidc_scopes_' . $oidc_num_server ] = 'openid email profile';
+					}
+					if ( ! array_key_exists( 'oidc_prompt_' . $oidc_num_server, $auth_multisite_settings ) ) {
+						$auth_multisite_settings[ 'oidc_prompt_' . $oidc_num_server ] = '';
+					}
+					if ( ! array_key_exists( 'oidc_login_hint_' . $oidc_num_server, $auth_multisite_settings ) ) {
+						$auth_multisite_settings[ 'oidc_login_hint_' . $oidc_num_server ] = '';
+					}
+					if ( ! array_key_exists( 'oidc_max_age_' . $oidc_num_server, $auth_multisite_settings ) ) {
+						$auth_multisite_settings[ 'oidc_max_age_' . $oidc_num_server ] = '';
+					}
+					if ( ! array_key_exists( 'oidc_attr_username_' . $oidc_num_server, $auth_multisite_settings ) ) {
+						$auth_multisite_settings[ 'oidc_attr_username_' . $oidc_num_server ] = 'preferred_username';
+					}
+					if ( ! array_key_exists( 'oidc_attr_email_' . $oidc_num_server, $auth_multisite_settings ) ) {
+						$auth_multisite_settings[ 'oidc_attr_email_' . $oidc_num_server ] = 'email';
+					}
+					if ( ! array_key_exists( 'oidc_attr_first_name_' . $oidc_num_server, $auth_multisite_settings ) ) {
+						$auth_multisite_settings[ 'oidc_attr_first_name_' . $oidc_num_server ] = 'given_name';
+					}
+					if ( ! array_key_exists( 'oidc_attr_last_name_' . $oidc_num_server, $auth_multisite_settings ) ) {
+						$auth_multisite_settings[ 'oidc_attr_last_name_' . $oidc_num_server ] = 'family_name';
+					}
+					if ( ! array_key_exists( 'oidc_attr_update_on_login_' . $oidc_num_server, $auth_multisite_settings ) ) {
+						$auth_multisite_settings[ 'oidc_attr_update_on_login_' . $oidc_num_server ] = '';
+					}
+					if ( ! array_key_exists( 'oidc_require_verified_email_' . $oidc_num_server, $auth_multisite_settings ) ) {
+						$auth_multisite_settings[ 'oidc_require_verified_email_' . $oidc_num_server ] = '';
+					}
+					if ( ! array_key_exists( 'oidc_link_on_username_' . $oidc_num_server, $auth_multisite_settings ) ) {
+						$auth_multisite_settings[ 'oidc_link_on_username_' . $oidc_num_server ] = '';
+					}
+					if ( ! array_key_exists( 'oidc_hosteddomain_' . $oidc_num_server, $auth_multisite_settings ) ) {
+						$auth_multisite_settings[ 'oidc_hosteddomain_' . $oidc_num_server ] = '';
+					}
+				}
+			}
+			if ( ! array_key_exists( 'google', $auth_multisite_settings ) ) {
+				$auth_multisite_settings['google'] = '';
 			}
 			if ( ! array_key_exists( 'google_clientid', $auth_multisite_settings ) ) {
 				$auth_multisite_settings['google_clientid'] = '';
@@ -723,6 +1100,9 @@ class Options extends Singleton {
 			}
 			if ( ! array_key_exists( 'google_hosteddomain', $auth_multisite_settings ) ) {
 				$auth_multisite_settings['google_hosteddomain'] = '';
+			}
+			if ( ! array_key_exists( 'cas', $auth_multisite_settings ) ) {
+				$auth_multisite_settings['cas'] = '';
 			}
 			if ( ! array_key_exists( 'cas_auto_login', $auth_multisite_settings ) ) {
 				$auth_multisite_settings['cas_auto_login'] = '';
@@ -799,6 +1179,9 @@ class Options extends Singleton {
 						$auth_multisite_settings[ 'cas_link_on_username_' . $cas_num_server ] = '';
 					}
 				}
+			}
+			if ( ! array_key_exists( 'ldap', $auth_multisite_settings ) ) {
+				$auth_multisite_settings['ldap'] = '';
 			}
 			if ( ! array_key_exists( 'ldap_host', $auth_multisite_settings ) ) {
 				$auth_multisite_settings['ldap_host'] = '';
@@ -920,6 +1303,14 @@ class Options extends Singleton {
 			$auth_settings['access_who_can_view'] = 'everyone';
 		}
 
+		// Make sure users receiving pending user notifications is an empty array if
+		// it's empty.
+		// Note: this option doesn't exist in multisite options, so we first
+		// check to see if it exists.
+		if ( array_key_exists( 'access_users_receive_pending_emails', $auth_settings ) && ! is_array( $auth_settings['access_users_receive_pending_emails'] ) ) {
+			$auth_settings['access_users_receive_pending_emails'] = array();
+		}
+
 		// Default to WordPress login access redirect.
 		// Note: this option doesn't exist in multisite options, so we first
 		// check to see if it exists.
@@ -940,12 +1331,28 @@ class Options extends Singleton {
 		// Sanitize Enable OAuth2 Logins (checkbox: value can only be '1' or empty string).
 		$auth_settings['oauth2'] = array_key_exists( 'oauth2', $auth_settings ) && strlen( $auth_settings['oauth2'] ) > 0 ? '1' : '';
 
-		// Sanitize OAuth2 auto-login (checkbox: value can only be '1' or empty string).
-		$auth_settings['oauth2_auto_login'] = array_key_exists( 'oauth2_auto_login', $auth_settings ) && strlen( $auth_settings['oauth2_auto_login'] ) > 0 ? '1' : '';
+		// Sanitize OAuth2 auto-login (select: value can be between '1' and '20' or empty string).
+		if ( ! isset( $auth_settings['oauth2_auto_login'] ) || ! in_array( $auth_settings['oauth2_auto_login'], array( '', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15', '16', '17', '18', '19', '20' ), true ) ) {
+			$auth_settings['oauth2_auto_login'] = '';
+		}
+
+		// Sanitize OAuth2 number of servers (range: value can only be '1' to '20').
+		$auth_settings['oauth2_num_servers'] = filter_var( $auth_settings['oauth2_num_servers'], FILTER_SANITIZE_NUMBER_INT );
+		$auth_settings['oauth2_num_servers'] = intval( $auth_settings['oauth2_num_servers'] ) < 1 || intval( $auth_settings['oauth2_num_servers'] ) > 20 ? '1' : $auth_settings['oauth2_num_servers'];
 
 		// Sanitize Oauth2 attribute update (select: value can only be 'update-if-empty', '1', or empty string).
 		if ( ! isset( $auth_settings['oauth2_attr_update_on_login'] ) || ! in_array( $auth_settings['oauth2_attr_update_on_login'], array( '', '1', 'update-if-empty' ), true ) ) {
 			$auth_settings['oauth2_attr_update_on_login'] = '';
+		}
+
+		// Sanitize settings for any additional OAuth2 servers.
+		if ( intval( $auth_settings['oauth2_num_servers'] ) > 1 ) {
+			foreach ( range( 2, min( intval( $auth_settings['oauth2_num_servers'] ), 20 ) ) as $oauth2_num_server ) {
+				// Sanitize Oauth2 attribute update (select: value can only be 'update-if-empty', '1', or empty string).
+				if ( ! isset( $auth_settings[ 'oauth2_attr_update_on_login_' . $oauth2_num_server ] ) || ! in_array( $auth_settings[ 'oauth2_attr_update_on_login_' . $oauth2_num_server ], array( '', '1', 'update-if-empty' ), true ) ) {
+					$auth_settings[ 'oauth2_attr_update_on_login_' . $oauth2_num_server ] = '';
+				}
+			}
 		}
 
 		// Sanitize Enable Google Logins (checkbox: value can only be '1' or empty string).
@@ -1020,6 +1427,51 @@ class Options extends Singleton {
 		// Sanitize LDAP attribute update (select: value can only be 'update-if-empty', '1', or empty string).
 		if ( ! isset( $auth_settings['ldap_attr_update_on_login'] ) || ! in_array( $auth_settings['ldap_attr_update_on_login'], array( '', '1', 'update-if-empty' ), true ) ) {
 			$auth_settings['ldap_attr_update_on_login'] = '';
+		}
+
+		// Sanitize Enable OIDC Logins (checkbox: value can only be '1' or empty string).
+		$auth_settings['oidc'] = array_key_exists( 'oidc', $auth_settings ) && strlen( $auth_settings['oidc'] ) > 0 ? '1' : '';
+
+		// Sanitize OIDC Num Servers (int, 1-20).
+		$auth_settings['oidc_num_servers'] = filter_var( $auth_settings['oidc_num_servers'] ?? '1', FILTER_SANITIZE_NUMBER_INT );
+		$auth_settings['oidc_num_servers'] = intval( $auth_settings['oidc_num_servers'] ) < 1 || intval( $auth_settings['oidc_num_servers'] ) > 20 ? '1' : $auth_settings['oidc_num_servers'];
+
+		// Sanitize OIDC auto-login (select: value can be between '1' and '20' or empty string).
+		if ( ! isset( $auth_settings['oidc_auto_login'] ) || ! in_array( $auth_settings['oidc_auto_login'], array( '', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15', '16', '17', '18', '19', '20' ), true ) ) {
+			$auth_settings['oidc_auto_login'] = '';
+		}
+
+		// Sanitize OIDC Issuer URL.
+		$auth_settings['oidc_issuer'] = filter_var( $auth_settings['oidc_issuer'] ?? '', FILTER_SANITIZE_URL );
+
+		// Sanitize OIDC attribute update (select: value can only be 'update-if-empty', '1', or empty string).
+		if ( ! isset( $auth_settings['oidc_attr_update_on_login'] ) || ! in_array( $auth_settings['oidc_attr_update_on_login'], array( '', '1', 'update-if-empty' ), true ) ) {
+			$auth_settings['oidc_attr_update_on_login'] = '';
+		}
+
+		// Sanitize OIDC require verified email (checkbox: value can only be '1' or empty string).
+		$auth_settings['oidc_require_verified_email'] = array_key_exists( 'oidc_require_verified_email', $auth_settings ) && strlen( $auth_settings['oidc_require_verified_email'] ) > 0 ? '1' : '';
+
+		// Sanitize OIDC link on username (checkbox: value can only be '1' or empty string).
+		$auth_settings['oidc_link_on_username'] = array_key_exists( 'oidc_link_on_username', $auth_settings ) && strlen( $auth_settings['oidc_link_on_username'] ) > 0 ? '1' : '';
+
+		// Sanitize settings for any additional OIDC servers.
+		if ( intval( $auth_settings['oidc_num_servers'] ) > 1 ) {
+			foreach ( range( 2, min( intval( $auth_settings['oidc_num_servers'] ), 20 ) ) as $oidc_num_server ) {
+				// Sanitize OIDC Issuer URL.
+				$auth_settings[ 'oidc_issuer_' . $oidc_num_server ] = filter_var( $auth_settings[ 'oidc_issuer_' . $oidc_num_server ] ?? '', FILTER_SANITIZE_URL );
+
+				// Sanitize OIDC attribute update (select: value can only be 'update-if-empty', '1', or empty string).
+				if ( ! isset( $auth_settings[ 'oidc_attr_update_on_login_' . $oidc_num_server ] ) || ! in_array( $auth_settings[ 'oidc_attr_update_on_login_' . $oidc_num_server ], array( '', '1', 'update-if-empty' ), true ) ) {
+					$auth_settings[ 'oidc_attr_update_on_login_' . $oidc_num_server ] = '';
+				}
+
+				// Sanitize OIDC require verified email (checkbox: value can only be '1' or empty string).
+				$auth_settings[ 'oidc_require_verified_email_' . $oidc_num_server ] = array_key_exists( 'oidc_require_verified_email_' . $oidc_num_server, $auth_settings ) && strlen( $auth_settings[ 'oidc_require_verified_email_' . $oidc_num_server ] ) > 0 ? '1' : '';
+
+				// Sanitize OIDC link on username (checkbox: value can only be '1' or empty string).
+				$auth_settings[ 'oidc_link_on_username_' . $oidc_num_server ] = array_key_exists( 'oidc_link_on_username_' . $oidc_num_server, $auth_settings ) && strlen( $auth_settings[ 'oidc_link_on_username_' . $oidc_num_server ] ) > 0 ? '1' : '';
+			}
 		}
 
 		// Make sure public pages is an empty array if it's empty.
@@ -1146,6 +1598,11 @@ class Options extends Singleton {
 			<h2 class="nav-tab-wrapper">
 				<a class="nav-tab nav-tab-access_lists nav-tab-active" href="javascript:chooseTab('access_lists' );"><?php esc_html_e( 'Access Lists', 'authorizer' ); ?></a>
 				<a class="nav-tab nav-tab-external" href="javascript:chooseTab('external' );"><?php esc_html_e( 'External Service', 'authorizer' ); ?></a>
+				<a class="nav-tab nav-tab-external_oauth2" href="javascript:chooseTab('external_oauth2' );"><?php esc_html_e( 'OAuth2', 'authorizer' ); ?></a>
+				<a class="nav-tab nav-tab-external_oidc" href="javascript:chooseTab('external_oidc' );"><?php esc_html_e( 'OIDC', 'authorizer' ); ?></a>
+				<a class="nav-tab nav-tab-external_google" href="javascript:chooseTab('external_google' );"><?php esc_html_e( 'Google', 'authorizer' ); ?></a>
+				<a class="nav-tab nav-tab-external_cas" href="javascript:chooseTab('external_cas' );"><?php esc_html_e( 'CAS', 'authorizer' ); ?></a>
+				<a class="nav-tab nav-tab-external_ldap" href="javascript:chooseTab('external_ldap' );"><?php esc_html_e( 'LDAP', 'authorizer' ); ?></a>
 				<a class="nav-tab nav-tab-advanced" href="javascript:chooseTab('advanced' );"><?php esc_html_e( 'Advanced', 'authorizer' ); ?></a>
 			</h2>
 		<?php else : ?>
@@ -1154,6 +1611,11 @@ class Options extends Singleton {
 				<a class="nav-tab nav-tab-access_login" href="javascript:chooseTab('access_login' );"><?php esc_html_e( 'Login Access', 'authorizer' ); ?></a>
 				<a class="nav-tab nav-tab-access_public" href="javascript:chooseTab('access_public' );"><?php esc_html_e( 'Public Access', 'authorizer' ); ?></a>
 				<a class="nav-tab nav-tab-external" href="javascript:chooseTab('external' );"><?php esc_html_e( 'External Service', 'authorizer' ); ?></a>
+				<a class="nav-tab nav-tab-external_oauth2" href="javascript:chooseTab('external_oauth2' );"><?php esc_html_e( 'OAuth2', 'authorizer' ); ?></a>
+				<a class="nav-tab nav-tab-external_oidc" href="javascript:chooseTab('external_oidc' );"><?php esc_html_e( 'OIDC', 'authorizer' ); ?></a>
+				<a class="nav-tab nav-tab-external_google" href="javascript:chooseTab('external_google' );"><?php esc_html_e( 'Google', 'authorizer' ); ?></a>
+				<a class="nav-tab nav-tab-external_cas" href="javascript:chooseTab('external_cas' );"><?php esc_html_e( 'CAS', 'authorizer' ); ?></a>
+				<a class="nav-tab nav-tab-external_ldap" href="javascript:chooseTab('external_ldap' );"><?php esc_html_e( 'LDAP', 'authorizer' ); ?></a>
 				<a class="nav-tab nav-tab-advanced" href="javascript:chooseTab('advanced' );"><?php esc_html_e( 'Advanced', 'authorizer' ); ?></a>
 			</h2>
 			<?php

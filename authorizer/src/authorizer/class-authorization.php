@@ -23,9 +23,13 @@ class Authorization extends Singleton {
 	 *
 	 * @param WP_User $user        User to check.
 	 * @param array   $user_emails Array of user's plaintext emails (in case current user doesn't have a WP account).
-	 * @param array   $user_data   Array of keys for email, username, first_name, last_name,
-	 *                             authenticated_by, google_attributes, cas_attributes, ldap_attributes,
-	 *                             oauth2_attributes.
+	 * @param array   $user_data   Array of keys for email, username, first_name, last_name, authenticated_by,
+	 *                             and any of the following based on authentication method:
+	 *                             google_attributes,
+	 *                             cas_attributes, cas_server_id,
+	 *                             ldap_attributes,
+	 *                             oauth2_attributes, oauth2_provider, oauth2_server_id,
+	 *                             oidc_attributes, oidc_server_id.
 	 * @return WP_Error|WP_User
 	 *                             WP_Error if there was an error on user creation / adding user to blog.
 	 *                             WP_Error / wp_die() if user does not have access.
@@ -47,45 +51,42 @@ class Authorization extends Singleton {
 			)
 		);
 
+		// If this is an existing user, update which external service authenticated
+		// them.
+		if ( $user && ! empty( $user_data['authenticated_by'] ) ) {
+			update_user_meta( $user->ID, 'authenticated_by', $user_data['authenticated_by'] );
+		}
+
+		// Get whether to update first/last name on login from the external service
+		// used to authenticate this user.
+		$attr_update_on_login = '';
+		if ( ! empty( $user_data['authenticated_by'] ) ) {
+			$attr_update_on_login_key = '';
+			if ( 'cas' === $user_data['authenticated_by'] ) {
+				$attr_update_on_login_key = empty( $user_data['cas_server_id'] ) || 1 === intval( $user_data['cas_server_id'] ) ? 'cas_attr_update_on_login' : 'cas_attr_update_on_login_' . $user_data['cas_server_id'];
+			} elseif ( 'ldap' === $user_data['authenticated_by'] ) {
+				$attr_update_on_login_key = 'ldap_attr_update_on_login';
+			} elseif ( 'oauth2' === $user_data['authenticated_by'] ) {
+				$attr_update_on_login_key = empty( $user_data['oauth2_server_id'] ) || 1 === intval( $user_data['oauth2_server_id'] ) ? 'oauth2_attr_update_on_login' : 'oauth2_attr_update_on_login_' . $user_data['oauth2_server_id'];
+			} elseif ( 'oidc' === $user_data['authenticated_by'] ) {
+				$attr_update_on_login_key = empty( $user_data['oidc_server_id'] ) || 1 === intval( $user_data['oidc_server_id'] ) ? 'oidc_attr_update_on_login' : 'oidc_attr_update_on_login_' . $user_data['oidc_server_id'];
+			}
+			if ( ! empty( $attr_update_on_login_key ) ) {
+				$attr_update_on_login = ! empty( $auth_settings[ $attr_update_on_login_key ] ) ? $auth_settings[ $attr_update_on_login_key ] : '';
+			}
+		}
+
 		// Detect whether this user's first and last name should be updated below
-		// (if the external CAS/LDAP service provides a different value, the option
-		// is set to update it, and it's empty if the option to only set it if empty
-		// is enabled).
+		// (if the external service provides a different value, the option is set to
+		// update it, and it's empty if the option to only set it if empty is
+		// enabled).
 		$should_update_first_name =
 			$user && ! empty( $user_data['first_name'] ) && $user_data['first_name'] !== $user->first_name &&
-			(
-				(
-					! empty( $user_data['authenticated_by'] ) && 'cas' === $user_data['authenticated_by'] &&
-					! empty( $auth_settings['cas_attr_update_on_login'] ) &&
-					( '1' === $auth_settings['cas_attr_update_on_login'] || ( 'update-if-empty' === $auth_settings['cas_attr_update_on_login'] && empty( $user->first_name ) ) )
-				) || (
-					! empty( $user_data['authenticated_by'] ) && 'ldap' === $user_data['authenticated_by'] &&
-					! empty( $auth_settings['ldap_attr_update_on_login'] ) &&
-					( '1' === $auth_settings['ldap_attr_update_on_login'] || ( 'update-if-empty' === $auth_settings['ldap_attr_update_on_login'] && empty( $user->first_name ) ) )
-				) || (
-					! empty( $user_data['authenticated_by'] ) && 'oauth2' === $user_data['authenticated_by'] &&
-					! empty( $auth_settings['oauth2_attr_update_on_login'] ) &&
-					( '1' === $auth_settings['oauth2_attr_update_on_login'] || ( 'update-if-empty' === $auth_settings['oauth2_attr_update_on_login'] && empty( $user->first_name ) ) )
-				)
-			);
+			( '1' === $attr_update_on_login || ( 'update-if-empty' === $attr_update_on_login && empty( $user->first_name ) ) );
 
 		$should_update_last_name =
 			$user && ! empty( $user_data['last_name'] ) && $user_data['last_name'] !== $user->last_name &&
-			(
-				(
-					! empty( $user_data['authenticated_by'] ) && 'cas' === $user_data['authenticated_by'] &&
-					! empty( $auth_settings['cas_attr_update_on_login'] ) &&
-					( '1' === $auth_settings['cas_attr_update_on_login'] || ( 'update-if-empty' === $auth_settings['cas_attr_update_on_login'] && empty( $user->last_name ) ) )
-				) || (
-					! empty( $user_data['authenticated_by'] ) && 'ldap' === $user_data['authenticated_by'] &&
-					! empty( $auth_settings['ldap_attr_update_on_login'] ) &&
-					( '1' === $auth_settings['ldap_attr_update_on_login'] || ( 'update-if-empty' === $auth_settings['ldap_attr_update_on_login'] && empty( $user->last_name ) ) )
-				) || (
-					! empty( $user_data['authenticated_by'] ) && 'oauth2' === $user_data['authenticated_by'] &&
-					! empty( $auth_settings['oauth2_attr_update_on_login'] ) &&
-					( '1' === $auth_settings['oauth2_attr_update_on_login'] || ( 'update-if-empty' === $auth_settings['oauth2_attr_update_on_login'] && empty( $user->last_name ) ) )
-				)
-			);
+			( '1' === $attr_update_on_login || ( 'update-if-empty' === $attr_update_on_login && empty( $user->last_name ) ) );
 
 		/**
 		 * Filter whether to block the currently logging in user based on any of
@@ -115,7 +116,7 @@ class Authorization extends Singleton {
 							'date_added' => wp_date( 'M Y' ),
 						)
 					);
-					update_option( 'auth_settings_access_users_blocked', $auth_settings_access_users_blocked );
+					update_option( 'auth_settings_access_users_blocked', $auth_settings_access_users_blocked, false );
 				}
 
 				// If the blocked external user has a WordPress account, mark it as
@@ -123,6 +124,19 @@ class Authorization extends Singleton {
 				if ( $user ) {
 					update_user_meta( $user->ID, 'auth_blocked', 'yes' );
 				}
+
+				// Allow overriding the message blocked users see after logging in.
+				if ( defined( 'AUTHORIZER_LOGIN_MESSAGE_BLOCKED_USERS' ) ) {
+					$auth_settings['access_blocked_redirect_to_message'] = \AUTHORIZER_LOGIN_MESSAGE_BLOCKED_USERS;
+				}
+				/**
+				 * Filters the message blocked users see after logging in.
+				 *
+				 * @since 3.12.0
+				 *
+				 * @param string $message The message content.
+				 */
+				$auth_settings['access_blocked_redirect_to_message'] = apply_filters( 'authorizer_login_message_blocked_users', $auth_settings['access_blocked_redirect_to_message'] );
 
 				// Notify user about blocked status and return without authenticating them.
 				// phpcs:ignore WordPress.Security.NonceVerification
@@ -139,7 +153,7 @@ class Authorization extends Singleton {
 					'<a class="button" href="' . wp_logout_url( $redirect_to ) . '">' .
 					__( 'Back', 'authorizer' ) .
 					'</a></p>';
-				update_option( 'auth_settings_advanced_login_error', $error_message );
+				update_option( 'auth_settings_advanced_login_error', $error_message, false );
 				wp_die( wp_kses( $error_message, Helper::$allowed_html ), esc_html( $page_title ) );
 				return new \WP_Error( 'invalid_login', __( 'Invalid login attempted.', 'authorizer' ) );
 			}
@@ -184,7 +198,7 @@ class Authorization extends Singleton {
 
 		// If this externally-authenticated user is an existing administrator (admin
 		// in single site mode, or super admin in network mode), and isn't blocked,
-		// let them in. Update their first/last name if needed (CAS/LDAP).
+		// let them in. Update their first/last name if needed.
 		if ( $user && is_super_admin( $user->ID ) ) {
 			if ( $should_update_first_name ) {
 				update_user_meta( $user->ID, 'first_name', $user_data['first_name'] );
@@ -220,7 +234,7 @@ class Authorization extends Singleton {
 					foreach ( $auth_settings_access_users_pending as $key => $pending_user ) {
 						if ( 0 === strcasecmp( $pending_user['email'], $user_email ) ) {
 							unset( $auth_settings_access_users_pending[ $key ] );
-							update_option( 'auth_settings_access_users_pending', $auth_settings_access_users_pending );
+							update_option( 'auth_settings_access_users_pending', $auth_settings_access_users_pending, false );
 							break;
 						}
 					}
@@ -234,7 +248,7 @@ class Authorization extends Singleton {
 				);
 				array_push( $auth_settings_access_users_approved, $approved_user );
 				array_push( $auth_settings_access_users_approved_single, $approved_user );
-				update_option( 'auth_settings_access_users_approved', $auth_settings_access_users_approved_single );
+				update_option( 'auth_settings_access_users_approved', $auth_settings_access_users_approved_single, false );
 			}
 
 			// Check our externally authenticated user against the approved
@@ -256,7 +270,7 @@ class Authorization extends Singleton {
 						if ( $user_info['email'] === $auth_settings_access_user_approved_single['email'] ) {
 							if ( $auth_settings_access_users_approved_single[ $index ]['role'] !== $approved_role ) {
 								$auth_settings_access_users_approved_single[ $index ]['role'] = $approved_role;
-								update_option( 'auth_settings_access_users_approved', $auth_settings_access_users_approved_single );
+								update_option( 'auth_settings_access_users_approved', $auth_settings_access_users_approved_single, false );
 							}
 							break;
 						}
@@ -329,6 +343,11 @@ class Authorization extends Singleton {
 					 * );
 					 */
 					do_action( 'authorizer_user_register', $user, $user_data );
+
+					// Save which external service authenticated this new user to user meta.
+					if ( $user && ! empty( $user_data['authenticated_by'] ) ) {
+						update_user_meta( $user->ID, 'authenticated_by', $user_data['authenticated_by'] );
+					}
 
 					// If multisite, iterate through all sites in the network and add the user
 					// currently logging in to any of them that have the user on the approved list.
@@ -488,7 +507,7 @@ class Authorization extends Singleton {
 					$pending_user['role']       = $approved_role;
 					$pending_user['date_added'] = '';
 					array_push( $auth_settings_access_users_pending, $pending_user );
-					update_option( 'auth_settings_access_users_pending', $auth_settings_access_users_pending );
+					update_option( 'auth_settings_access_users_pending', $auth_settings_access_users_pending, false );
 
 					// Create strings used in the email notification.
 					$site_name              = get_bloginfo( 'name' );
@@ -496,25 +515,51 @@ class Authorization extends Singleton {
 					$authorizer_options_url = 'settings' === $auth_settings['advanced_admin_menu'] ? admin_url( 'options-general.php?page=authorizer' ) : admin_url( '?page=authorizer' );
 
 					// Notify users with the role specified in "Which role should
-					// receive email notifications about pending users?".
-					if ( strlen( $auth_settings['access_role_receive_pending_emails'] ) > 0 ) {
-						foreach ( get_users( array( 'role' => $auth_settings['access_role_receive_pending_emails'] ) ) as $user_recipient ) {
-							wp_mail(
-								$user_recipient->user_email,
-								sprintf(
-									/* TRANSLATORS: 1: User email 2: Name of site */
-									__( 'Action required: Pending user %1$s at %2$s', 'authorizer' ),
-									$pending_user['email'],
-									$site_name
-								),
-								sprintf(
-									/* TRANSLATORS: 1: Name of site 2: URL of site 3: URL of authorizer */
-									__( "A new user has tried to access the %1\$s site you manage at:\n%2\$s\n\nPlease log in to approve or deny their request:\n%3\$s\n", 'authorizer' ),
-									$site_name,
-									$site_url,
-									$authorizer_options_url
-								)
-							);
+					// receive email notifications about pending users?" and any
+					// individual users specified in "Which users should receive email
+					// notifications about pending users?".
+					if ( strlen( $auth_settings['access_role_receive_pending_emails'] ) > 0 || ! empty( $auth_settings['access_users_receive_pending_emails'] ) ) {
+						$emails_to_notify = array();
+						// Add users with specified role (if any).
+						if ( strlen( $auth_settings['access_role_receive_pending_emails'] ) > 0 ) {
+							foreach ( get_users( array( 'role' => $auth_settings['access_role_receive_pending_emails'] ) ) as $user_recipient ) {
+								if ( ! empty( $user_recipient->user_email ) ) {
+									$emails_to_notify[] = $user_recipient->user_email;
+								}
+							}
+						}
+						// Add individual users (if any).
+						if ( ! empty( $auth_settings['access_users_receive_pending_emails'] ) ) {
+							foreach ( $auth_settings['access_users_receive_pending_emails'] as $username ) {
+								$user_recipient = get_user_by( 'login', $username );
+								if ( ! empty( $user_recipient->user_email ) ) {
+									$emails_to_notify[] = $user_recipient->user_email;
+								}
+							}
+						}
+						// Remove any duplicate email addresses (a user could potentially be
+						// added via their role and again via their username).
+						$emails_to_notify = array_unique( $emails_to_notify );
+						// Email each recipient.
+						if ( count( $emails_to_notify ) > 0 ) {
+							foreach ( $emails_to_notify as $email ) {
+								wp_mail(
+									$email,
+									sprintf(
+										/* TRANSLATORS: 1: User email 2: Name of site */
+										__( 'Action required: Pending user %1$s at %2$s', 'authorizer' ),
+										$pending_user['email'],
+										$site_name
+									),
+									sprintf(
+										/* TRANSLATORS: 1: Name of site 2: URL of site 3: URL of authorizer */
+										__( "A new user has tried to access the %1\$s site you manage at:\n%2\$s\n\nPlease log in to approve or deny their request:\n%3\$s\n", 'authorizer' ),
+										$site_name,
+										$site_url,
+										$authorizer_options_url
+									)
+								);
+							}
 						}
 					}
 				}
@@ -525,6 +570,19 @@ class Authorization extends Singleton {
 				// because a pending user does not have a WP_User, and thus no
 				// "authenticated_by" usermeta that is normally used to do this.
 				$external_param = isset( $user_data['authenticated_by'] ) ? '&external=' . $user_data['authenticated_by'] : '';
+
+				// Allow overriding the message pending users see after logging in.
+				if ( defined( 'AUTHORIZER_LOGIN_MESSAGE_PENDING_USERS' ) ) {
+					$auth_settings['access_pending_redirect_to_message'] = \AUTHORIZER_LOGIN_MESSAGE_PENDING_USERS;
+				}
+				/**
+				 * Filters the message pending users see after logging in.
+				 *
+				 * @since 3.12.0
+				 *
+				 * @param string $message The message content.
+				 */
+				$auth_settings['access_pending_redirect_to_message'] = apply_filters( 'authorizer_login_message_pending_users', $auth_settings['access_pending_redirect_to_message'] );
 
 				// Notify user about pending status and return without authenticating them.
 				// phpcs:ignore WordPress.Security.NonceVerification
@@ -537,7 +595,7 @@ class Authorization extends Singleton {
 					'<a class="button" href="' . wp_logout_url( $redirect_to ) . $external_param . '">' .
 					__( 'Back', 'authorizer' ) .
 					'</a></p>';
-				update_option( 'auth_settings_advanced_login_error', $error_message );
+				update_option( 'auth_settings_advanced_login_error', $error_message, false );
 				wp_die( wp_kses( $error_message, Helper::$allowed_html ), esc_html( $page_title ) );
 			}
 		}
@@ -599,7 +657,7 @@ class Authorization extends Singleton {
 		 */
 		if ( apply_filters( 'authorizer_has_access', $has_access, $wp ) === true ) {
 			// Turn off the public notice about browsing anonymously.
-			update_option( 'auth_settings_advanced_public_notice', false );
+			update_option( 'auth_settings_advanced_public_notice', false, true );
 
 			// We've determined that the current user has access, so simply return to grant access.
 			return $wp;
@@ -634,9 +692,9 @@ class Authorization extends Singleton {
 		}
 		if ( in_array( strval( $current_page_id ), $auth_settings['access_public_pages'], true ) ) {
 			if ( 'no_warning' === $auth_settings['access_public_warning'] ) {
-				update_option( 'auth_settings_advanced_public_notice', false );
+				update_option( 'auth_settings_advanced_public_notice', false, true );
 			} else {
-				update_option( 'auth_settings_advanced_public_notice', true );
+				update_option( 'auth_settings_advanced_public_notice', true, true );
 			}
 			return $wp;
 		}
@@ -646,9 +704,9 @@ class Authorization extends Singleton {
 		foreach ( $current_page_categories as $current_page_category ) {
 			if ( in_array( 'cat_' . $current_page_category, $auth_settings['access_public_pages'], true ) ) {
 				if ( 'no_warning' === $auth_settings['access_public_warning'] ) {
-					update_option( 'auth_settings_advanced_public_notice', false );
+					update_option( 'auth_settings_advanced_public_notice', false, true );
 				} else {
-					update_option( 'auth_settings_advanced_public_notice', true );
+					update_option( 'auth_settings_advanced_public_notice', true, true );
 				}
 				return $wp;
 			}
@@ -658,9 +716,9 @@ class Authorization extends Singleton {
 		if ( strlen( $current_page_id ) < 1 ) {
 			if ( in_array( 'auth_public_404', $auth_settings['access_public_pages'], true ) ) {
 				if ( 'no_warning' === $auth_settings['access_public_warning'] ) {
-					update_option( 'auth_settings_advanced_public_notice', false );
+					update_option( 'auth_settings_advanced_public_notice', false, true );
 				} else {
-					update_option( 'auth_settings_advanced_public_notice', true );
+					update_option( 'auth_settings_advanced_public_notice', true, true );
 				}
 				return $wp;
 			}
@@ -673,13 +731,26 @@ class Authorization extends Singleton {
 			$current_category_name        = end( $current_category_name_pieces );
 			if ( in_array( 'cat_' . $current_category_name, $auth_settings['access_public_pages'], true ) ) {
 				if ( 'no_warning' === $auth_settings['access_public_warning'] ) {
-					update_option( 'auth_settings_advanced_public_notice', false );
+					update_option( 'auth_settings_advanced_public_notice', false, true );
 				} else {
-					update_option( 'auth_settings_advanced_public_notice', true );
+					update_option( 'auth_settings_advanced_public_notice', true, true );
 				}
 				return $wp;
 			}
 		}
+
+		// Allow overriding the message anonymous users see.
+		if ( defined( 'AUTHORIZER_MESSAGE_ANONYMOUS_USERS' ) ) {
+			$auth_settings['access_redirect_to_message'] = \AUTHORIZER_MESSAGE_ANONYMOUS_USERS;
+		}
+		/**
+		 * Filters the message anonymous users see when visiting public pages on a private site.
+		 *
+		 * @since 3.12.0
+		 *
+		 * @param string $message The message content.
+		 */
+		$auth_settings['access_redirect_to_message'] = apply_filters( 'authorizer_message_anonymous_users', $auth_settings['access_redirect_to_message'] );
 
 		// User is denied access, so show them the error message. Render as JSON
 		// if this is a REST API call; otherwise, show the error message via
@@ -808,6 +879,19 @@ class Authorization extends Singleton {
 				'logged_in_users' === $auth_settings['access_who_can_view'] &&
 				false === apply_filters( 'authorizer_has_access', false, $GLOBALS['wp'] )
 			) {
+				// Allow overriding the message anonymous users see.
+				if ( defined( 'AUTHORIZER_MESSAGE_ANONYMOUS_USERS' ) ) {
+					$auth_settings['access_redirect_to_message'] = \AUTHORIZER_MESSAGE_ANONYMOUS_USERS;
+				}
+				/**
+				 * Filters the message anonymous users see when visiting public pages on a private site.
+				 *
+				 * @since 3.12.0
+				 *
+				 * @param string $message The message content.
+				 */
+				$auth_settings['access_redirect_to_message'] = apply_filters( 'authorizer_message_anonymous_users', $auth_settings['access_redirect_to_message'] );
+
 				return new \WP_Error(
 					'rest_cannot_view',
 					wp_strip_all_tags( $auth_settings['access_redirect_to_message'] ),
