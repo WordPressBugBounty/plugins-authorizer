@@ -20,7 +20,7 @@ class Advanced extends \Authorizer\Singleton {
 	/**
 	 * Settings print callback.
 	 *
-	 * @param  string $args Args (e.g., multisite admin mode).
+	 * @param  array $args Args (e.g., multisite admin mode).
 	 * @return void
 	 */
 	public function print_section_info_advanced( $args = '' ) {
@@ -35,7 +35,7 @@ class Advanced extends \Authorizer\Singleton {
 	/**
 	 * Settings print callback.
 	 *
-	 * @param  string $args Args (e.g., multisite admin mode).
+	 * @param  array $args Args (e.g., multisite admin mode).
 	 * @return void
 	 */
 	public function print_text_auth_advanced_lockouts( $args = '' ) {
@@ -47,15 +47,15 @@ class Advanced extends \Authorizer\Singleton {
 		// Print option elements.
 		esc_html_e( 'After', 'authorizer' );
 		?>
-		<input type="text" id="auth_settings_<?php echo esc_attr( $option ); ?>_attempts_1" name="auth_settings[<?php echo esc_attr( $option ); ?>][attempts_1]" value="<?php echo esc_attr( $auth_settings_option['attempts_1'] ); ?>" placeholder="10" style="width:40px;" />
+		<input type="text" id="auth_settings_<?php echo esc_attr( $option ); ?>_attempts_1" name="auth_settings[<?php echo esc_attr( $option ); ?>][attempts_1]" value="<?php echo esc_attr( $auth_settings_option['attempts_1'] ); ?>" placeholder="10" style="width:44px;" />
 		<?php esc_html_e( 'invalid password attempts, delay further attempts on that user for', 'authorizer' ); ?>
-		<input type="text" id="auth_settings_<?php echo esc_attr( $option ); ?>_duration_1" name="auth_settings[<?php echo esc_attr( $option ); ?>][duration_1]" value="<?php echo esc_attr( $auth_settings_option['duration_1'] ); ?>" placeholder="1" style="width:40px;" />
+		<input type="text" id="auth_settings_<?php echo esc_attr( $option ); ?>_duration_1" name="auth_settings[<?php echo esc_attr( $option ); ?>][duration_1]" value="<?php echo esc_attr( $auth_settings_option['duration_1'] ); ?>" placeholder="1" style="width:44px;" />
 		<?php esc_html_e( 'minute(s).', 'authorizer' ); ?>
 		<br />
 		<?php esc_html_e( 'After', 'authorizer' ); ?>
-		<input type="text" id="auth_settings_<?php echo esc_attr( $option ); ?>_attempts_2" name="auth_settings[<?php echo esc_attr( $option ); ?>][attempts_2]" value="<?php echo esc_attr( $auth_settings_option['attempts_2'] ); ?>" placeholder="10" style="width:40px;" />
+		<input type="text" id="auth_settings_<?php echo esc_attr( $option ); ?>_attempts_2" name="auth_settings[<?php echo esc_attr( $option ); ?>][attempts_2]" value="<?php echo esc_attr( $auth_settings_option['attempts_2'] ); ?>" placeholder="10" style="width:44px;" />
 		<?php esc_html_e( 'more invalid attempts, increase the delay to', 'authorizer' ); ?>
-		<input type="text" id="auth_settings_<?php echo esc_attr( $option ); ?>_duration_2" name="auth_settings[<?php echo esc_attr( $option ); ?>][duration_2]" value="<?php echo esc_attr( $auth_settings_option['duration_2'] ); ?>" placeholder="10" style="width:40px;" />
+		<input type="text" id="auth_settings_<?php echo esc_attr( $option ); ?>_duration_2" name="auth_settings[<?php echo esc_attr( $option ); ?>][duration_2]" value="<?php echo esc_attr( $auth_settings_option['duration_2'] ); ?>" placeholder="10" style="width:44px;" />
 		<?php esc_html_e( 'minutes.', 'authorizer' ); ?>
 		<br />
 		<?php esc_html_e( 'Reset the delays after', 'authorizer' ); ?>
@@ -68,7 +68,7 @@ class Advanced extends \Authorizer\Singleton {
 	/**
 	 * Settings print callback.
 	 *
-	 * @param  string $args Args (e.g., multisite admin mode).
+	 * @param  array $args Args (e.g., multisite admin mode).
 	 * @return void
 	 */
 	public function print_checkbox_auth_advanced_hide_wp_login( $args = '' ) {
@@ -88,7 +88,7 @@ class Advanced extends \Authorizer\Singleton {
 	/**
 	 * Settings print callback.
 	 *
-	 * @param  string $args Args (e.g., multisite admin mode).
+	 * @param  array $args Args (e.g., multisite admin mode).
 	 * @return void
 	 */
 	public function print_checkbox_auth_advanced_disable_wp_login( $args = '' ) {
@@ -108,7 +108,7 @@ class Advanced extends \Authorizer\Singleton {
 	/**
 	 * Settings print callback.
 	 *
-	 * @param  string $args Args (e.g., multisite admin mode).
+	 * @param  array $args Args (e.g., multisite admin mode).
 	 * @return void
 	 */
 	public function print_text_advanced_disable_wp_login_bypass_usernames( $args = '' ) {
@@ -128,7 +128,7 @@ class Advanced extends \Authorizer\Singleton {
 	/**
 	 * Settings print callback.
 	 *
-	 * @param  string $args Args (e.g., multisite admin mode).
+	 * @param  array $args Args (e.g., multisite admin mode).
 	 * @return void
 	 */
 	public function print_radio_auth_advanced_branding( $args = '' ) {
@@ -222,7 +222,7 @@ class Advanced extends \Authorizer\Singleton {
 	/**
 	 * Settings print callback.
 	 *
-	 * @param  string $args Args (e.g., multisite admin mode).
+	 * @param  array $args Args (e.g., multisite admin mode).
 	 * @return void
 	 */
 	public function print_radio_auth_advanced_admin_menu( $args = '' ) {
@@ -245,7 +245,7 @@ class Advanced extends \Authorizer\Singleton {
 	/**
 	 * Settings print callback.
 	 *
-	 * @param  string $args Args (e.g., multisite admin mode).
+	 * @param  array $args Args (e.g., multisite admin mode).
 	 * @return void
 	 */
 	public function print_select_auth_advanced_usermeta( $args = '' ) {
@@ -335,7 +335,7 @@ class Advanced extends \Authorizer\Singleton {
 	/**
 	 * Settings print callback.
 	 *
-	 * @param  string $args Args (e.g., multisite admin mode).
+	 * @param  array $args Args (e.g., multisite admin mode).
 	 * @return void
 	 */
 	public function print_text_auth_advanced_users_per_page( $args = '' ) {
@@ -354,7 +354,7 @@ class Advanced extends \Authorizer\Singleton {
 	/**
 	 * Settings print callback.
 	 *
-	 * @param  string $args Args (e.g., multisite admin mode).
+	 * @param  array $args Args (e.g., multisite admin mode).
 	 * @return void
 	 */
 	public function print_select_auth_advanced_users_sort_by( $args = '' ) {
@@ -378,7 +378,7 @@ class Advanced extends \Authorizer\Singleton {
 	/**
 	 * Settings print callback.
 	 *
-	 * @param  string $args Args (e.g., multisite admin mode).
+	 * @param  array $args Args (e.g., multisite admin mode).
 	 * @return void
 	 */
 	public function print_select_auth_advanced_users_sort_order( $args = '' ) {
@@ -400,7 +400,7 @@ class Advanced extends \Authorizer\Singleton {
 	/**
 	 * Settings print callback.
 	 *
-	 * @param  string $args Args (e.g., multisite admin mode).
+	 * @param  array $args Args (e.g., multisite admin mode).
 	 * @return void
 	 */
 	public function print_checkbox_auth_advanced_widget_enabled( $args = '' ) {
@@ -420,7 +420,7 @@ class Advanced extends \Authorizer\Singleton {
 	/**
 	 * Settings print callback.
 	 *
-	 * @param  string $args Args (e.g., multisite admin mode).
+	 * @param  array $args Args (e.g., multisite admin mode).
 	 * @return void
 	 */
 	public function print_checkbox_auth_advanced_override_multisite( $args = '' ) {
