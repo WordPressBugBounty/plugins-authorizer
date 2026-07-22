@@ -403,6 +403,7 @@
 			attr_first_name: $( '#auth_settings_oauth2_attr_first_name' ).closest( 'tr' ),
 			attr_last_name: $( '#auth_settings_oauth2_attr_last_name' ).closest( 'tr' ),
 			attr_update_on_login: $( '#auth_settings_oauth2_attr_update_on_login' ).closest( 'tr' ),
+			link_on_username: $( '#auth_settings_oauth2_link_on_username' ).closest( 'tr' ),
 		} );
 		// OAuth2 settings below are for any additional OAuth2 servers configured (up to 20).
 		for ( var i = 2; i <= parseInt( $( '#auth_settings_oauth2_num_servers' ).val() ) && i <= 20; i++ ) {
@@ -421,6 +422,7 @@
 				attr_first_name: $( '#auth_settings_oauth2_attr_first_name_' + i ).closest( 'tr' ),
 				attr_last_name: $( '#auth_settings_oauth2_attr_last_name_' + i ).closest( 'tr' ),
 				attr_update_on_login: $( '#auth_settings_oauth2_attr_update_on_login_' + i ).closest( 'tr' ),
+				link_on_username: $( '#auth_settings_oauth2_link_on_username_' + i ).closest( 'tr' ),
 			} );
 		}
 		var auth_settings_external_google_clientid = $( '#auth_settings_google_clientid' ).closest( 'tr' );
@@ -674,6 +676,12 @@
 			var tab = '';
 			if ( getQuerystringValuesByKey( 'tab' ).length > 0 ) {
 				tab = getQuerystringValuesByKey( 'tab' )[0];
+				// Remove querystring param (to avoid returning to that tab after saving
+				// settings, where the user could have moved to a different tab which
+				// would update the value in sessionStorage).
+				url = new URL( window.location.href );
+				url.searchParams.delete( 'tab' );
+				window.history.replaceState( null, '', url.toString() );
 			} else if ( sessionStorage.getItem( 'tab' ) ) {
 				tab = sessionStorage.getItem( 'tab' );
 			}
@@ -1155,6 +1163,7 @@
 		params.oauth2_attr_first_name = $( '#auth_settings_oauth2_attr_first_name' ).val();
 		params.oauth2_attr_last_name = $( '#auth_settings_oauth2_attr_last_name' ).val();
 		params.oauth2_attr_update_on_login = $( '#auth_settings_oauth2_attr_update_on_login' ).val();
+		params.oauth2_link_on_username = $( '#auth_settings_oauth2_link_on_username' ).is( ':checked' ) ? '1' : '';
 		if ( params.oauth2_num_servers > 1 ) {
 			for ( var oauth2_num_server = 2; oauth2_num_server <= params.oauth2_num_servers && oauth2_num_server <= 20; oauth2_num_server++ ) {
 				params['oauth2_provider_' + oauth2_num_server] = $( '#auth_settings_oauth2_provider_' + oauth2_num_server ).val();
@@ -1171,6 +1180,7 @@
 				params['oauth2_attr_first_name_' + oauth2_num_server] = $( '#auth_settings_oauth2_attr_first_name_' + oauth2_num_server ).val();
 				params['oauth2_attr_last_name_' + oauth2_num_server] = $( '#auth_settings_oauth2_attr_last_name_' + oauth2_num_server ).val();
 				params['oauth2_attr_update_on_login_' + oauth2_num_server] = $( '#auth_settings_oauth2_attr_update_on_login_' + oauth2_num_server ).val();
+				params['oauth2_link_on_username_' + oauth2_num_server] = $( '#auth_settings_oauth2_link_on_username_' + oauth2_num_server ).is( ':checked' ) ? '1' : '';
 			}
 		}
 
@@ -1276,6 +1286,7 @@
 		params.advanced_hide_wp_login = $( '#auth_settings_advanced_hide_wp_login' ).is( ':checked' ) ? '1' : '';
 		params.advanced_disable_wp_login = $( '#auth_settings_advanced_disable_wp_login' ).is( ':checked' ) ? '1' : '';
 		params.advanced_disable_wp_login_bypass_usernames = $( '#auth_settings_advanced_disable_wp_login_bypass_usernames' ).val();
+		params.advanced_show_usernames = $( '#auth_settings_advanced_show_usernames' ).is( ':checked' ) ? '1' : '';
 		params.advanced_widget_enabled = $( '#auth_settings_advanced_widget_enabled' ).is( ':checked' ) ? '1' : '';
 		params.advanced_users_per_page = $( '#auth_settings_advanced_users_per_page' ).val();
 		params.advanced_users_sort_by = $( '#auth_settings_advanced_users_sort_by' ).val();

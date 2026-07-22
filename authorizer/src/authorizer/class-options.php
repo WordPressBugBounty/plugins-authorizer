@@ -79,6 +79,16 @@ class Options extends Singleton {
 				$tab = '&tab=access_lists';
 			} elseif ( 0 === strpos( $option, 'advanced_' ) ) {
 				$tab = '&tab=advanced';
+			} elseif ( str_starts_with( $option, 'oauth2_' ) ) {
+				$tab = '&tab=external_oauth2';
+			} elseif ( str_starts_with( $option, 'oidc_' ) ) {
+				$tab = '&tab=external_oidc';
+			} elseif ( str_starts_with( $option, 'google_' ) ) {
+				$tab = '&tab=external_google';
+			} elseif ( str_starts_with( $option, 'cas_' ) ) {
+				$tab = '&tab=external_cas';
+			} elseif ( str_starts_with( $option, 'ldap_' ) ) {
+				$tab = '&tab=external_ldap';
 			}
 			?>
 			<div id="overlay-hide-auth_settings_<?php echo esc_attr( $option ); ?>" class="auth_multisite_override_overlay">
@@ -187,6 +197,7 @@ class Options extends Singleton {
 				$auth_settings['oauth2_attr_first_name']      = $auth_multisite_settings['oauth2_attr_first_name'] ?? '';
 				$auth_settings['oauth2_attr_last_name']       = $auth_multisite_settings['oauth2_attr_last_name'] ?? '';
 				$auth_settings['oauth2_attr_update_on_login'] = $auth_multisite_settings['oauth2_attr_update_on_login'] ?? '';
+				$auth_settings['oauth2_link_on_username']     = $auth_multisite_settings['oauth2_link_on_username'] ?? '';
 				// Add any options for extra OAuth2 servers.
 				if ( ! empty( $auth_multisite_settings['oauth2_num_servers'] ) && intval( $auth_multisite_settings['oauth2_num_servers'] ) > 1 ) {
 					foreach ( range( 2, min( intval( $auth_multisite_settings['oauth2_num_servers'] ), 20 ) ) as $oauth2_num_server ) {
@@ -204,6 +215,7 @@ class Options extends Singleton {
 						$auth_settings[ 'oauth2_attr_first_name_' . $oauth2_num_server ]      = $auth_multisite_settings[ 'oauth2_attr_first_name_' . $oauth2_num_server ] ?? '';
 						$auth_settings[ 'oauth2_attr_last_name_' . $oauth2_num_server ]       = $auth_multisite_settings[ 'oauth2_attr_last_name_' . $oauth2_num_server ] ?? '';
 						$auth_settings[ 'oauth2_attr_update_on_login_' . $oauth2_num_server ] = $auth_multisite_settings[ 'oauth2_attr_update_on_login_' . $oauth2_num_server ] ?? '';
+						$auth_settings[ 'oauth2_link_on_username_' . $oauth2_num_server ]     = $auth_multisite_settings[ 'oauth2_link_on_username_' . $oauth2_num_server ] ?? '';
 					}
 				}
 
@@ -333,6 +345,9 @@ class Options extends Singleton {
 
 				// Override Sort users order.
 				$auth_settings['advanced_users_sort_order'] = $auth_multisite_settings['advanced_users_sort_order'];
+
+				// Override Show usernames in approved users list.
+				$auth_settings['advanced_show_usernames'] = $auth_multisite_settings['advanced_show_usernames'] ?? '';
 
 				// Override Show Dashboard Widget.
 				$auth_settings['advanced_widget_enabled'] = $auth_multisite_settings['advanced_widget_enabled'];
@@ -500,6 +515,9 @@ class Options extends Singleton {
 		if ( ! array_key_exists( 'oauth2_attr_update_on_login', $auth_settings ) ) {
 			$auth_settings['oauth2_attr_update_on_login'] = '';
 		}
+		if ( ! array_key_exists( 'oauth2_link_on_username', $auth_settings ) ) {
+			$auth_settings['oauth2_link_on_username'] = '';
+		}
 		if ( intval( $auth_settings['oauth2_num_servers'] ) > 1 ) {
 			foreach ( range( 2, min( intval( $auth_settings['oauth2_num_servers'] ), 20 ) ) as $oauth2_num_server ) {
 				if ( ! array_key_exists( 'oauth2_provider_' . $oauth2_num_server, $auth_settings ) ) {
@@ -543,6 +561,9 @@ class Options extends Singleton {
 				}
 				if ( ! array_key_exists( 'oauth2_attr_update_on_login_' . $oauth2_num_server, $auth_settings ) ) {
 					$auth_settings[ 'oauth2_attr_update_on_login_' . $oauth2_num_server ] = '';
+				}
+				if ( ! array_key_exists( 'oauth2_link_on_username_' . $oauth2_num_server, $auth_settings ) ) {
+					$auth_settings[ 'oauth2_link_on_username_' . $oauth2_num_server ] = '';
 				}
 			}
 		}
@@ -841,6 +862,9 @@ class Options extends Singleton {
 		if ( ! array_key_exists( 'advanced_users_sort_order', $auth_settings ) ) {
 			$auth_settings['advanced_users_sort_order'] = 'asc';
 		}
+		if ( ! array_key_exists( 'advanced_show_usernames', $auth_settings ) ) {
+			$auth_settings['advanced_show_usernames'] = '';
+		}
 		if ( ! array_key_exists( 'advanced_widget_enabled', $auth_settings ) ) {
 			$auth_settings['advanced_widget_enabled'] = '1';
 		}
@@ -945,6 +969,9 @@ class Options extends Singleton {
 			if ( ! array_key_exists( 'oauth2_attr_update_on_login', $auth_multisite_settings ) ) {
 				$auth_multisite_settings['oauth2_attr_update_on_login'] = '';
 			}
+			if ( ! array_key_exists( 'oauth2_link_on_username', $auth_multisite_settings ) ) {
+				$auth_multisite_settings['oauth2_link_on_username'] = '';
+			}
 			if ( intval( $auth_multisite_settings['oauth2_num_servers'] ) > 1 ) {
 				foreach ( range( 2, min( intval( $auth_multisite_settings['oauth2_num_servers'] ), 20 ) ) as $oauth2_num_server ) {
 					if ( ! array_key_exists( 'oauth2_provider_' . $oauth2_num_server, $auth_multisite_settings ) ) {
@@ -988,6 +1015,9 @@ class Options extends Singleton {
 					}
 					if ( ! array_key_exists( 'oauth2_attr_update_on_login_' . $oauth2_num_server, $auth_multisite_settings ) ) {
 						$auth_multisite_settings[ 'oauth2_attr_update_on_login_' . $oauth2_num_server ] = '';
+					}
+					if ( ! array_key_exists( 'oauth2_link_on_username_' . $oauth2_num_server, $auth_multisite_settings ) ) {
+						$auth_multisite_settings[ 'oauth2_link_on_username_' . $oauth2_num_server ] = '';
 					}
 				}
 			}
@@ -1270,6 +1300,9 @@ class Options extends Singleton {
 			if ( ! array_key_exists( 'advanced_users_sort_order', $auth_multisite_settings ) ) {
 				$auth_multisite_settings['advanced_users_sort_order'] = 'asc';
 			}
+			if ( ! array_key_exists( 'advanced_show_usernames', $auth_multisite_settings ) ) {
+				$auth_multisite_settings['advanced_show_usernames'] = '';
+			}
 			if ( ! array_key_exists( 'advanced_widget_enabled', $auth_multisite_settings ) ) {
 				$auth_multisite_settings['advanced_widget_enabled'] = '1';
 			}
@@ -1362,6 +1395,9 @@ class Options extends Singleton {
 			$auth_settings['oauth2_attr_update_on_login'] = '';
 		}
 
+		// Sanitize OAuth2 link on username (checkbox: value can only be '1' or empty string).
+		$auth_settings['oauth2_link_on_username'] = array_key_exists( 'oauth2_link_on_username', $auth_settings ) && strlen( $auth_settings['oauth2_link_on_username'] ) > 0 ? '1' : '';
+
 		// Sanitize settings for any additional OAuth2 servers.
 		if ( intval( $auth_settings['oauth2_num_servers'] ) > 1 ) {
 			foreach ( range( 2, min( intval( $auth_settings['oauth2_num_servers'] ), 20 ) ) as $oauth2_num_server ) {
@@ -1369,6 +1405,9 @@ class Options extends Singleton {
 				if ( ! isset( $auth_settings[ 'oauth2_attr_update_on_login_' . $oauth2_num_server ] ) || ! in_array( $auth_settings[ 'oauth2_attr_update_on_login_' . $oauth2_num_server ], array( '', '1', 'update-if-empty' ), true ) ) {
 					$auth_settings[ 'oauth2_attr_update_on_login_' . $oauth2_num_server ] = '';
 				}
+
+				// Sanitize OAuth2 link on username (checkbox: value can only be '1' or empty string).
+				$auth_settings[ 'oauth2_link_on_username_' . $oauth2_num_server ] = array_key_exists( 'oauth2_link_on_username_' . $oauth2_num_server, $auth_settings ) && strlen( $auth_settings[ 'oauth2_link_on_username_' . $oauth2_num_server ] ) > 0 ? '1' : '';
 			}
 		}
 
@@ -1535,6 +1574,9 @@ class Options extends Singleton {
 		if ( ! isset( $auth_settings['advanced_users_sort_order'] ) || ! in_array( $auth_settings['advanced_users_sort_order'], array( 'asc', 'desc' ), true ) ) {
 			$auth_settings['advanced_users_sort_order'] = 'asc';
 		}
+
+		// Sanitize Show usernames in approved users list (checkbox: value can only be '1' or empty string).
+		$auth_settings['advanced_show_usernames'] = array_key_exists( 'advanced_show_usernames', $auth_settings ) && strlen( $auth_settings['advanced_show_usernames'] ) > 0 ? '1' : '';
 
 		// Sanitize Show Dashboard Widget (checkbox: value can only be '1' or empty string).
 		$auth_settings['advanced_widget_enabled'] = array_key_exists( 'advanced_widget_enabled', $auth_settings ) && strlen( $auth_settings['advanced_widget_enabled'] ) > 0 ? '1' : '';

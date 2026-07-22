@@ -236,9 +236,10 @@ class Admin_Page extends Singleton {
 
 
 	/**
-	 * Add notices to the top of the options page.
+	 * Add notices to the top of the options page and network options page.
 	 *
 	 * Action: load-settings_page_authorizer > admin_notices
+	 * Action: load-settings_page_authorizer > network_admin_notices
 	 *
 	 * Description: Check for invalid settings combinations and show a warning message, e.g.:
 	 *   if ( cas url inaccessible ) : ?>
@@ -251,16 +252,69 @@ class Admin_Page extends Singleton {
 		$auth_settings = $options->get_all( Helper::SINGLE_CONTEXT, 'allow override' );
 
 		if ( '1' === $auth_settings['cas'] ) :
-			// Check if provided CAS URL is accessible.
-			$protocol       = in_array( strval( $auth_settings['cas_port'] ), array( '80', '8080' ), true ) ? 'http' : 'https';
-			$cas_url        = $protocol . '://' . $auth_settings['cas_host'] . ':' . $auth_settings['cas_port'] . $auth_settings['cas_path'];
-			$legacy_cas_url = trailingslashit( $cas_url ) . 'login'; // Check the specific CAS login endpoint (old; some servers don't register a ./login endpoint, use serviceValidate instead).
-			$cas_url        = trailingslashit( $cas_url ) . 'serviceValidate'; // Check the specific CAS login endpoint.
-			if ( ! Helper::url_is_accessible( $cas_url ) && ! Helper::url_is_accessible( $legacy_cas_url ) ) :
-				$authorizer_options_url = 'settings' === $auth_settings['advanced_admin_menu'] ? admin_url( 'options-general.php?page=authorizer' ) : admin_url( '?page=authorizer' );
+			// Get link to the default CAS settings page.
+			$authorizer_options_url = admin_url( '?page=authorizer&tab=external_cas' );
+			// If the Authorizer menu item is under Settings, point to that settings page.
+			if ( 'settings' === $auth_settings['advanced_admin_menu'] ) {
+				$authorizer_options_url = admin_url( 'options-general.php?page=authorizer&tab=external_cas' );
+			}
+			// If we're in multisite settings, point to that settings page instead.
+			if ( is_network_admin() ) {
+				$authorizer_options_url = network_admin_url( '?page=authorizer&tab=external_cas' );
+			}
+
+			// Fetch all configured CAS server URLs.
+			$cas_urls = array();
+			// Fetch first configured CAS server.
+			$protocol   = in_array( strval( $auth_settings['cas_port'] ), array( '80', '8080' ), true ) ? 'http' : 'https';
+			$cas_url    = $protocol . '://' . $auth_settings['cas_host'] . ':' . $auth_settings['cas_port'] . $auth_settings['cas_path'];
+			$cas_urls[] = $cas_url;
+			// Fetch any additional CAS servers configured.
+			if ( empty( $auth_settings['cas_num_servers'] ) ) :
+				$auth_settings['cas_num_servers'] = 1;
+			endif;
+			if ( $auth_settings['cas_num_servers'] > 1 ) :
+				for ( $i = 2; $i <= $auth_settings['cas_num_servers']; $i++ ) :
+					if ( empty( $auth_settings[ 'cas_host_' . $i ] ) ) :
+						continue;
+					endif;
+					$protocol   = in_array( strval( $auth_settings[ 'cas_port_' . $i ] ), array( '80', '8080' ), true ) ? 'http' : 'https';
+					$cas_url    = $protocol . '://' . $auth_settings[ 'cas_host_' . $i ] . ':' . $auth_settings[ 'cas_port_' . $i ] . $auth_settings[ 'cas_path_' . $i ];
+					$cas_urls[] = $cas_url;
+				endfor;
+			endif;
+
+			// Check for any configured CAS servers that are unreachable.
+			$unreachable_cas_urls = array();
+			foreach ( $cas_urls as $cas_url ) :
+				$response      = wp_remote_get( trailingslashit( $cas_url ) . 'serviceValidate' );
+				$response_code = wp_remote_retrieve_response_code( $response );
+				if ( empty( $response_code ) || $response_code < 200 || $response_code > 400 ) :
+					$response_body = wp_remote_retrieve_body( $response );
+					// Check the legacy CAS endpoint first before reporting unreachable.
+					$response      = wp_remote_get( trailingslashit( $cas_url ) . 'login' );
+					$response_code = wp_remote_retrieve_response_code( $response );
+					if ( empty( $response_code ) || $response_code < 200 || $response_code > 400 ) :
+						// Flag CAS URL as unreachable.
+						$unreachable_cas_urls[ $cas_url ] = empty( $response_body ) ? '' : $response_body;
+					endif;
+				endif;
+			endforeach;
+
+			if ( ! empty( $unreachable_cas_urls ) ) :
 				?>
 				<div class='notice notice-warning is-dismissible'>
-					<p><?php esc_html_e( "Can't reach CAS server. Please provide", 'authorizer' ); ?> <a href='<?php echo esc_attr( $authorizer_options_url ); ?>&tab=external'><?php esc_html_e( 'accurate CAS settings', 'authorizer' ); ?></a> <?php esc_html_e( 'if you intend to use it.', 'authorizer' ); ?></p>
+					<p><?php esc_html_e( "Can't reach CAS server. Please provide", 'authorizer' ); ?> <a href="<?php echo esc_attr( $authorizer_options_url ); ?>"><?php esc_html_e( 'accurate CAS settings', 'authorizer' ); ?></a> <?php esc_html_e( 'if you intend to use it.', 'authorizer' ); ?></p>
+					<ul>
+						<?php foreach ( $unreachable_cas_urls as $unreachable_cas_url => $error_message ) : ?>
+							<li>
+								<strong><?php echo esc_html( $unreachable_cas_url ); ?></strong>
+								<?php if ( ! empty( $error_message ) ) : ?>
+									<br><pre><?php echo esc_html( $error_message ); ?></pre>
+								<?php endif; ?>
+							</li>
+						<?php endforeach; ?>
+					</ul>
 				</div>
 				<?php
 			endif;
@@ -682,6 +736,16 @@ class Admin_Page extends Singleton {
 				'auth_settings_oauth2_attr_update_on_login' . $suffix,
 				$prefix . __( 'Name attribute update', 'authorizer' ),
 				array( Oauth2::get_instance(), 'print_select_oauth2_attr_update_on_login' ),
+				'authorizer',
+				'auth_settings_external_oauth2',
+				array(
+					'oauth2_num_server' => $oauth2_num_server,
+				)
+			);
+			add_settings_field(
+				'auth_settings_oauth2_link_on_username' . $suffix,
+				$prefix . __( 'OAuth2 users linked by username', 'authorizer' ),
+				array( Oauth2::get_instance(), 'print_checkbox_oauth2_link_on_username' ),
 				'authorizer',
 				'auth_settings_external_oauth2',
 				array(
@@ -1247,6 +1311,13 @@ class Admin_Page extends Singleton {
 			'auth_settings_advanced'
 		);
 		add_settings_field(
+			'auth_settings_advanced_show_usernames',
+			__( 'Show usernames in approved users list', 'authorizer' ),
+			array( Advanced::get_instance(), 'print_checkbox_auth_advanced_show_usernames' ),
+			'authorizer',
+			'auth_settings_advanced'
+		);
+		add_settings_field(
 			'auth_settings_advanced_widget_enabled',
 			__( 'Show dashboard widget to admin users', 'authorizer' ),
 			array( Advanced::get_instance(), 'print_checkbox_auth_advanced_widget_enabled' ),
@@ -1540,6 +1611,17 @@ class Admin_Page extends Singleton {
 									<?php
 									$oauth2->print_select_oauth2_attr_update_on_login( array(
 										'context' => Helper::NETWORK_CONTEXT,
+										'oauth2_num_server' => $oauth2_num_server,
+									) );
+									?>
+								</td>
+							</tr>
+							<tr>
+								<th scope="row"><?php echo esc_html( $prefix ); ?><?php esc_html_e( 'OAuth2 users linked by username', 'authorizer' ); ?></th>
+								<td>
+									<?php
+									$oauth2->print_checkbox_oauth2_link_on_username( array(
+										'context'         => Helper::NETWORK_CONTEXT,
 										'oauth2_num_server' => $oauth2_num_server,
 									) );
 									?>
@@ -2013,6 +2095,10 @@ class Admin_Page extends Singleton {
 							<td><?php $advanced->print_select_auth_advanced_users_sort_order( array( 'context' => Helper::NETWORK_CONTEXT ) ); ?></td>
 						</tr>
 						<tr>
+							<th scope="row"><?php esc_html_e( 'Show usernames in approved users list', 'authorizer' ); ?></th>
+							<td><?php $advanced->print_checkbox_auth_advanced_show_usernames( array( 'context' => Helper::NETWORK_CONTEXT ) ); ?></td>
+						</tr>
+						<tr>
 							<th scope="row"><?php esc_html_e( 'Show Dashboard Widget', 'authorizer' ); ?></th>
 							<td><?php $advanced->print_checkbox_auth_advanced_widget_enabled( array( 'context' => Helper::NETWORK_CONTEXT ) ); ?></td>
 						</tr>
@@ -2088,7 +2174,7 @@ class Admin_Page extends Singleton {
 	 * Action: admin_head-index.php
 	 */
 	public function load_options_page() {
-		wp_enqueue_script( 'authorizer', plugins_url( 'js/authorizer.js', plugin_root() ), array( 'jquery-effects-shake' ), '3.14.3', true );
+		wp_enqueue_script( 'authorizer', plugins_url( 'js/authorizer.js', plugin_root() ), array( 'jquery-effects-shake' ), '3.15.0', true );
 		wp_localize_script(
 			'authorizer',
 			'authL10n',
@@ -2128,7 +2214,11 @@ class Admin_Page extends Singleton {
 		wp_register_style( 'select2', plugins_url( 'vendor-custom/select2/4.0.13/dist/css/select2.min.css', plugin_root() ), array(), '4.0.13' );
 		wp_enqueue_style( 'select2' );
 
-		add_action( 'admin_notices', array( self::get_instance(), 'admin_notices' ) ); // Add any notices to the top of the options page.
-		add_action( 'admin_head', array( self::get_instance(), 'admin_head' ) ); // Add help documentation to the options page.
+		// Hook into admin notices (only on plugin settings page, not dashboard).
+		if ( 'admin_head-index.php' !== current_action() ) {
+			add_action( 'admin_notices', array( self::get_instance(), 'admin_notices' ) ); // Add any notices to the top of the options page.
+			add_action( 'network_admin_notices', array( self::get_instance(), 'admin_notices' ) ); // Add any notices to the top of the network options page.
+			add_action( 'admin_head', array( self::get_instance(), 'admin_head' ) ); // Add help documentation to the options page.
+		}
 	}
 }
