@@ -403,6 +403,7 @@
 			attr_first_name: $( '#auth_settings_oauth2_attr_first_name' ).closest( 'tr' ),
 			attr_last_name: $( '#auth_settings_oauth2_attr_last_name' ).closest( 'tr' ),
 			attr_update_on_login: $( '#auth_settings_oauth2_attr_update_on_login' ).closest( 'tr' ),
+			require_verified_email: $( '#auth_settings_oauth2_require_verified_email' ).closest( 'tr' ),
 			link_on_username: $( '#auth_settings_oauth2_link_on_username' ).closest( 'tr' ),
 		} );
 		// OAuth2 settings below are for any additional OAuth2 servers configured (up to 20).
@@ -422,6 +423,7 @@
 				attr_first_name: $( '#auth_settings_oauth2_attr_first_name_' + i ).closest( 'tr' ),
 				attr_last_name: $( '#auth_settings_oauth2_attr_last_name_' + i ).closest( 'tr' ),
 				attr_update_on_login: $( '#auth_settings_oauth2_attr_update_on_login_' + i ).closest( 'tr' ),
+				require_verified_email: $( '#auth_settings_oauth2_require_verified_email_' + i ).closest( 'tr' ),
 				link_on_username: $( '#auth_settings_oauth2_link_on_username_' + i ).closest( 'tr' ),
 			} );
 		}
@@ -509,7 +511,15 @@
 		$( '.nav-tab-wrapper .nav-tab-external_ldap' ).toggle( $( '#auth_settings_ldap' ).is( ':checked' ) );
 
 		// Hide some OAuth2 options based on current settings.
-		auth_settings_external_oauth2_servers.forEach( function( server ) {
+		auth_settings_external_oauth2_servers.forEach( function ( server ) {
+			// Hide all OAuth2 options if OAuth2 provider isn't chosen.
+			if ( '' === server.provider.find( 'select' ).val() ) {
+				animateOption( 'hide_immediately', server.custom_label );
+				animateOption( 'hide_immediately', server.clientid );
+				animateOption( 'hide_immediately', server.clientsecret );
+				animateOption( 'hide_immediately', server.hosteddomain );
+				animateOption( 'hide_immediately', server.link_on_username );
+			}
 			// Hide OAuth2 generic options if OAuth2 provider is unchecked or generic isn't chosen.
 			if ( 'generic' !== server.provider.find( 'select' ).val() ) {
 				animateOption( 'hide_immediately', server.url_authorize );
@@ -524,6 +534,16 @@
 			// Hide OAuth2 Tenant ID if OAuth2 provider is unchecked or azure isn't chosen.
 			if ( 'azure' !== server.provider.find( 'select' ).val() ) {
 				animateOption( 'hide_immediately', server.tenant_id );
+			}
+			// Hide "Require verified email" if OAuth2 provider is unchecked or github is chosen (github always enforces this option).
+			if ( [ 'github', '' ].includes( server.provider.find( 'select' ).val() ) ) {
+				animateOption( 'hide_immediately', server.require_verified_email );
+			}
+			// Show different description for "Require verified email" based on OAuth2 provider.
+			if ( 'generic' !== server.provider.find( 'select' ).val() ) {
+				animateOption( 'hide_immediately', $( '.description-oauth2-generic', server.require_verified_email ) );
+			} else if ( 'azure' !== server.provider.find( 'select' ).val() ) {
+				animateOption( 'hide_immediately', $( '.description-oauth2-azure', server.require_verified_email ) );
 			}
 		} );
 
@@ -570,6 +590,12 @@
 		// Event handler: Show/hide OAuth2 generic/azure options based on provider.
 		auth_settings_external_oauth2_servers.forEach( function( server ) {
 			server.provider.find( 'select' ).on( 'change', function() {
+				var action = '' === $( this ).val() ? 'hide' : 'show';
+				animateOption( action, server.custom_label );
+				animateOption( action, server.clientid );
+				animateOption( action, server.clientsecret );
+				animateOption( action, server.hosteddomain );
+				animateOption( action, server.link_on_username );
 				var action = 'generic' === $( this ).val() ? 'show' : 'hide';
 				animateOption( action, server.url_authorize );
 				animateOption( action, server.url_token );
@@ -579,8 +605,13 @@
 				animateOption( action, server.attr_first_name );
 				animateOption( action, server.attr_last_name );
 				animateOption( action, server.attr_update_on_login );
+				action = 'generic' === $( this ).val() ? 'show' : 'hide';
+				animateOption( action, $( '.description-oauth2-generic', server.require_verified_email ) );
 				action = 'azure' === $( this ).val() ? 'show' : 'hide';
 				animateOption( action, server.tenant_id );
+				animateOption( action, $( '.description-oauth2-azure', server.require_verified_email ) );
+				action = [ '', 'github' ].includes( $( this ).val() ) ? 'hide' : 'show';
+				animateOption( action, server.require_verified_email );
 			});
 		});
 
