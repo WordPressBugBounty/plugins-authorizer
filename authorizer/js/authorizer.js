@@ -404,6 +404,7 @@
 			attr_last_name: $( '#auth_settings_oauth2_attr_last_name' ).closest( 'tr' ),
 			attr_update_on_login: $( '#auth_settings_oauth2_attr_update_on_login' ).closest( 'tr' ),
 			require_verified_email: $( '#auth_settings_oauth2_require_verified_email' ).closest( 'tr' ),
+			dangerously_skip_email_verification: $( '#auth_settings_oauth2_dangerously_skip_email_verification' ).closest( 'tr' ),
 			link_on_username: $( '#auth_settings_oauth2_link_on_username' ).closest( 'tr' ),
 		} );
 		// OAuth2 settings below are for any additional OAuth2 servers configured (up to 20).
@@ -424,6 +425,7 @@
 				attr_last_name: $( '#auth_settings_oauth2_attr_last_name_' + i ).closest( 'tr' ),
 				attr_update_on_login: $( '#auth_settings_oauth2_attr_update_on_login_' + i ).closest( 'tr' ),
 				require_verified_email: $( '#auth_settings_oauth2_require_verified_email_' + i ).closest( 'tr' ),
+				dangerously_skip_email_verification: $( '#auth_settings_oauth2_dangerously_skip_email_verification_' + i ).closest( 'tr' ),
 				link_on_username: $( '#auth_settings_oauth2_link_on_username_' + i ).closest( 'tr' ),
 			} );
 		}
@@ -539,6 +541,10 @@
 			if ( [ 'github', '' ].includes( server.provider.find( 'select' ).val() ) ) {
 				animateOption( 'hide_immediately', server.require_verified_email );
 			}
+			// Hide "Skip email verification" unless OAuth2 generic provider is chosen.
+			if ( 'generic' !== server.provider.find( 'select' ).val() ) {
+				animateOption( 'hide_immediately', server.dangerously_skip_email_verification );
+			}
 			// Show different description for "Require verified email" based on OAuth2 provider.
 			if ( 'generic' !== server.provider.find( 'select' ).val() ) {
 				animateOption( 'hide_immediately', $( '.description-oauth2-generic', server.require_verified_email ) );
@@ -547,10 +553,12 @@
 			}
 
 			// Enforce email verification if Azure Tenant ID not set.
-			const has_no_tenant_id = ['', 'common'].includes( $( 'input', server.tenant_id ).val() );
-			$( 'input', server.require_verified_email ).prop( 'disabled', has_no_tenant_id );
-			if ( has_no_tenant_id ) {
-				$( 'input', server.require_verified_email ).prop( 'checked', true );
+			if ( [ 'azure' ].includes( server.provider.find( 'select' ).val() ) ) {
+				const has_no_tenant_id = ['', 'common'].includes( $( 'input', server.tenant_id ).val() );
+				$( 'input', server.require_verified_email ).prop( 'disabled', has_no_tenant_id );
+				if ( has_no_tenant_id ) {
+					$( 'input', server.require_verified_email ).prop( 'checked', true );
+				}
 			}
 
 			// Event handler: enforce email verification if Azure Tenant ID not set.
@@ -632,6 +640,7 @@
 				animateOption( action, server.attr_last_name );
 				animateOption( action, server.attr_update_on_login );
 				action = 'generic' === $( this ).val() ? 'show' : 'hide';
+				animateOption( action, server.dangerously_skip_email_verification );
 				animateOption( action, $( '.description-oauth2-generic', server.require_verified_email ) );
 				action = 'azure' === $( this ).val() ? 'show' : 'hide';
 				animateOption( action, server.tenant_id );
@@ -1221,6 +1230,7 @@
 		params.oauth2_attr_last_name = $( '#auth_settings_oauth2_attr_last_name' ).val();
 		params.oauth2_attr_update_on_login = $( '#auth_settings_oauth2_attr_update_on_login' ).val();
 		params.oauth2_require_verified_email = $( '#auth_settings_oauth2_require_verified_email' ).is( ':checked' ) ? '1' : '';
+		params.oauth2_dangerously_skip_email_verification = $( '#auth_settings_oauth2_dangerously_skip_email_verification' ).is( ':checked' ) ? '1' : '';
 		params.oauth2_link_on_username = $( '#auth_settings_oauth2_link_on_username' ).is( ':checked' ) ? '1' : '';
 		if ( params.oauth2_num_servers > 1 ) {
 			for ( var oauth2_num_server = 2; oauth2_num_server <= params.oauth2_num_servers && oauth2_num_server <= 20; oauth2_num_server++ ) {
@@ -1238,7 +1248,8 @@
 				params['oauth2_attr_first_name_' + oauth2_num_server] = $( '#auth_settings_oauth2_attr_first_name_' + oauth2_num_server ).val();
 				params['oauth2_attr_last_name_' + oauth2_num_server] = $( '#auth_settings_oauth2_attr_last_name_' + oauth2_num_server ).val();
 				params['oauth2_attr_update_on_login_' + oauth2_num_server] = $( '#auth_settings_oauth2_attr_update_on_login_' + oauth2_num_server ).val();
-				params['oauth2_require_verified_email_' + oauth2_num_server] = $( '#auth_settings_oauth2_require_verified_email_' + oauth2_num_server ).is( ':checked' ) ? '1' : '';
+				params['oauth2_require_verified_email_' + oauth2_num_server] = $( '#auth_settings_oauth2_require_verified_email_' + oauth2_num_server ).length < 1 || $( '#auth_settings_oauth2_require_verified_email_' + oauth2_num_server ).is( ':checked' ) ? '1' : '';
+				params['oauth2_dangerously_skip_email_verification_' + oauth2_num_server] = $( '#auth_settings_oauth2_dangerously_skip_email_verification_' + oauth2_num_server ).is( ':checked' ) ? '1' : '';
 				params['oauth2_link_on_username_' + oauth2_num_server] = $( '#auth_settings_oauth2_link_on_username_' + oauth2_num_server ).is( ':checked' ) ? '1' : '';
 			}
 		}
@@ -1261,6 +1272,7 @@
 		params.oidc_attr_update_on_login = $( '#auth_settings_oidc_attr_update_on_login' ).val();
 		params.oidc_force_auth_method = $( '#auth_settings_oidc_force_auth_method' ).val();
 		params.oidc_require_verified_email = $( '#auth_settings_oidc_require_verified_email' ).is( ':checked' ) ? '1' : '';
+		params.oidc_dangerously_skip_email_verification = $( '#auth_settings_oidc_dangerously_skip_email_verification' ).is( ':checked' ) ? '1' : '';
 		params.oidc_link_on_username = $( '#auth_settings_oidc_link_on_username' ).is( ':checked' ) ? '1' : '';
 		params.oidc_hosteddomain = $( '#auth_settings_oidc_hosteddomain' ).val();
 		if ( params.oidc_num_servers > 1 ) {
@@ -1279,8 +1291,10 @@
 				params['oidc_attr_last_name_' + oidc_num_server] = $( '#auth_settings_oidc_attr_last_name_' + oidc_num_server ).val();
 				params['oidc_attr_update_on_login_' + oidc_num_server] = $( '#auth_settings_oidc_attr_update_on_login_' + oidc_num_server ).val();
 				params['oidc_force_auth_method_' + oidc_num_server] = $( '#auth_settings_oidc_force_auth_method_' + oidc_num_server ).val();
-				params['oidc_require_verified_email_' + oidc_num_server] = $( '#auth_settings_oidc_require_verified_email_' + oidc_num_server ).is( ':checked' ) ? '1' : '';
+				params['oidc_require_verified_email_' + oidc_num_server] = $( '#auth_settings_oidc_require_verified_email_' + oidc_num_server ).length < 1 || $( '#auth_settings_oidc_require_verified_email_' + oidc_num_server ).is( ':checked' ) ? '1' : '';
+				params['oidc_dangerously_skip_email_verification_' + oidc_num_server] = $( '#auth_settings_oidc_dangerously_skip_email_verification_' + oidc_num_server ).is( ':checked' ) ? '1' : '';
 				params['oidc_link_on_username_' + oidc_num_server] = $( '#auth_settings_oidc_link_on_username_' + oidc_num_server ).is( ':checked' ) ? '1' : '';
+				params['oidc_hosteddomain_' + oidc_num_server] = $( '#auth_settings_oidc_hosteddomain_' + oidc_num_server ).val();
 			}
 		}
 
@@ -1363,10 +1377,10 @@
 			// Disable wait cursor.
 			$( 'html' ).removeClass( 'busy' );
 
-			// If the save was successful, and we have more than 1 CAS or OAuth2
-			// servers configured, reload the page to render the additional CAS/Oauth2
-			// server settings fields.
-			if ( succeeded && ( params.cas_num_servers > 1 || params.oauth2_num_servers > 1 ) ) {
+			// If the save was successful, and we have more than 1 CAS/OAuth2/OIDC
+			// server(s) configured, reload the page to render the additional
+			// CAS/Oauth2/OIDC server settings fields.
+			if ( succeeded && ( params.cas_num_servers > 1 || params.oauth2_num_servers > 1 || params.oidc_num_servers > 1 ) ) {
 				location.reload();
 			}
 		}).fail( function() {

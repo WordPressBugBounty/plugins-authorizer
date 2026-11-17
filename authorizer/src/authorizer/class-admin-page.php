@@ -251,45 +251,7 @@ class Admin_Page extends Singleton {
 		$options       = Options::get_instance();
 		$auth_settings = $options->get_all( Helper::SINGLE_CONTEXT, 'allow override' );
 
-		// Warn on any OAuth2 Azure providers without Tenant ID restrictions.
-		if ( '1' === $auth_settings['oauth2'] ) :
-			// Get link to the default OAuth2 settings page.
-			$authorizer_options_url = admin_url( 'admin.php?page=authorizer&tab=external_oauth2' );
-			// If the Authorizer menu item is under Settings, point to that settings page.
-			if ( 'settings' === $auth_settings['advanced_admin_menu'] ) {
-				$authorizer_options_url = admin_url( 'options-general.php?page=authorizer&tab=external_oauth2' );
-			}
-			// If we're in multisite settings, point to that settings page instead.
-			if ( is_network_admin() ) {
-				$authorizer_options_url = network_admin_url( 'admin.php?page=authorizer&tab=external_oauth2' );
-			}
-
-			// Warn if any OAuth2 Azure servers have no Tenant ID restrictions.
-			$oauth2_azure_servers_without_tenant_restrictions = array();
-			if ( empty( $auth_settings['oauth2_num_servers'] ) ) :
-				$auth_settings['oauth2_num_servers'] = 1;
-			endif;
-			for ( $i = 1; $i <= $auth_settings['oauth2_num_servers']; $i++ ) :
-				$suffix = 1 === $i ? '' : '_' . $i;
-				if (
-					'azure' === $auth_settings[ 'oauth2_provider' . $suffix ] &&
-					( empty( $auth_settings[ 'oauth2_tenant_id' . $suffix ] ) || 'common' === $auth_settings[ 'oauth2_tenant_id' . $suffix ] )
-				) :
-					$oauth2_azure_servers_without_tenant_restrictions[] = $i;
-				endif;
-			endfor;
-			if ( ! empty( $oauth2_azure_servers_without_tenant_restrictions ) ) :
-				?>
-				<div class='notice notice-warning is-dismissible'>
-					<p><?php esc_html_e( 'Warning: a configured OAuth2 Azure server does not have any Tenant ID restrictions.', 'authorizer' ); ?> <?php esc_html_e( 'Email verification will be automatically performed and cannot be disabled.', 'authorizer' ); ?> <a href="https://learn.microsoft.com/en-us/entra/identity-platform/claims-validation#validate-the-tenant"><?php esc_html_e( 'More Info', 'authorizer' ); ?></a></p>
-					<?php foreach ( $oauth2_azure_servers_without_tenant_restrictions as $server_id ) : ?>
-						<a href="<?php echo esc_attr( $authorizer_options_url ); ?>#:~:text=<?php echo esc_html( $server_id ); ?>.%20Tenant%20ID" class="button button-primary"><?php esc_html_e( 'Review OAuth2 Server', 'authorizer' ); ?> #<?php echo esc_html( $server_id ); ?></a>
-					<?php endforeach; ?>
-				</div>
-				<?php
-			endif;
-		endif;
-
+		// Warn on any coinfigured CAS servers that are unreachable.
 		if ( '1' === $auth_settings['cas'] ) :
 			// Get link to the default CAS settings page.
 			$authorizer_options_url = admin_url( 'admin.php?page=authorizer&tab=external_cas' );
@@ -362,18 +324,196 @@ class Admin_Page extends Singleton {
 
 
 	/**
-	 * Show custom admin notice.
-	 *
-	 * Note: currently unused, but if anywhere we:
-	 *   add_option( 'auth_settings_advanced_admin_notice, 'Your message.' );
-	 * It will display and then delete that message on the admin dashboard.
+	 * Show any admin notices (on all admin pages).
 	 *
 	 * Filter: admin_notices
 	 * filter: network_admin_notices
 	 */
 	public function show_advanced_admin_notice() {
-		$notice = get_option( 'auth_settings_advanced_admin_notice' );
+		// Grab plugin settings.
+		$options       = Options::get_instance();
+		$auth_settings = $options->get_all( Helper::SINGLE_CONTEXT, 'allow override' );
 
+		// Warn (only admins) on any OIDC providers not requiring verified emails
+		// (and not explicitly skipped, and with a nonempty client ID and secret).
+		if ( ! empty( $auth_settings['oidc'] ) && current_user_can( 'create_users' ) ) :
+			// Get link to the default OIDC settings page.
+			$authorizer_options_url = admin_url( 'admin.php?page=authorizer&tab=external_oidc' );
+			// If the Authorizer menu item is under Settings, point to that settings page.
+			if ( 'settings' === $auth_settings['advanced_admin_menu'] ) {
+				$authorizer_options_url = admin_url( 'options-general.php?page=authorizer&tab=external_oidc' );
+			}
+			// If we're in multisite settings, point to that settings page instead.
+			if ( is_network_admin() ) {
+				$authorizer_options_url = network_admin_url( 'admin.php?page=authorizer&tab=external_oidc' );
+			}
+
+			$oidc_servers_without_require_verified_email_and_verification_not_skipped = array();
+			if ( empty( $auth_settings['oidc_num_servers'] ) ) :
+				$auth_settings['oidc_num_servers'] = 1;
+			endif;
+			for ( $i = 1; $i <= $auth_settings['oidc_num_servers']; $i++ ) :
+				$suffix = 1 === $i ? '' : '_' . $i;
+
+				// Allow constant or filter overrides of this option.
+				$oidc_dangerously_skip_email_verification = $auth_settings[ 'oidc_dangerously_skip_email_verification' . $suffix ] ?? '';
+				if ( defined( 'AUTHORIZER_OIDC_' . $i . '_DANGEROUSLY_SKIP_EMAIL_VERIFICATION' ) ) {
+					$oidc_dangerously_skip_email_verification = constant( 'AUTHORIZER_OIDC_' . $i . '_DANGEROUSLY_SKIP_EMAIL_VERIFICATION' );
+				}
+				// Also allow constant without server_id (applies to the first configured server).
+				if ( 1 === $i && defined( 'AUTHORIZER_OIDC_DANGEROUSLY_SKIP_EMAIL_VERIFICATION' ) ) {
+					$oidc_dangerously_skip_email_verification = constant( 'AUTHORIZER_OIDC_DANGEROUSLY_SKIP_EMAIL_VERIFICATION' );
+				}
+				/**
+				 * Filters the OIDC Skip email verification option. A truthy value will skip verification.
+				 *
+				 * @since 3.9.0
+				 *
+				 * @param string $oidc_dangerously_skip_email_verification  The existing OIDC Skip email verification option.
+				 */
+				$oidc_dangerously_skip_email_verification = apply_filters( 'authorizer_oidc_' . $i . '_dangerously_skip_email_verification', $oidc_dangerously_skip_email_verification );
+				// Also allow filter without server_id (applies to the first configured server).
+				if ( 1 === $i ) {
+					$oidc_dangerously_skip_email_verification = apply_filters( 'authorizer_oidc_dangerously_skip_email_verification', $oidc_dangerously_skip_email_verification );
+				}
+
+				if (
+					! empty( $auth_settings[ 'oidc_client_id' . $suffix ] ) &&
+					! empty( $auth_settings[ 'oidc_client_secret' . $suffix ] ) &&
+					empty( $auth_settings[ 'oidc_require_verified_email' . $suffix ] ) &&
+					empty( $oidc_dangerously_skip_email_verification )
+				) :
+					$oidc_servers_without_require_verified_email_and_verification_not_skipped[] = $i;
+				endif;
+			endfor;
+			if ( ! empty( $oidc_servers_without_require_verified_email_and_verification_not_skipped ) ) :
+				?>
+				<div class='notice notice-warning authorizer-warning-no-oidc-email-verification'>
+					<p><?php esc_html_e( 'Warning: a configured OIDC server does not require verified emails.', 'authorizer' ); ?> <?php esc_html_e( 'Email verification will be automatically performed unless explicitly disabled with the "Skip email verification" option.', 'authorizer' ); ?> </p>
+					<p><?php esc_html_e( 'Email verification consists of a one-time email verification performed by clicking a link in an email sent to them from this WordPress server after a successful OIDC sign-in.', 'authorizer' ); ?> </p>
+					<?php foreach ( $oidc_servers_without_require_verified_email_and_verification_not_skipped as $server_id ) : ?>
+						<?php $suffix = 1 === $server_id ? '' : '_' . $server_id; ?>
+						<a href="<?php echo esc_attr( $authorizer_options_url ); ?>#auth_settings_oidc_require_verified_email<?php echo esc_html( $suffix ); ?>" class="button button-primary"><?php esc_html_e( 'Review OIDC Server', 'authorizer' ); ?> #<?php echo esc_html( $server_id ); ?></a>
+					<?php endforeach; ?>
+				</div>
+				<?php
+			endif;
+		endif;
+
+		// Warn (only admins) on any Oauth2 generic providers not requiring verified
+		// emails (and not explicitly skipped, and with a nonempty client ID and
+		// secret).
+		if ( ! empty( $auth_settings['oauth2'] ) && current_user_can( 'create_users' ) ) :
+			// Get link to the default OAuth2 settings page.
+			$authorizer_options_url = admin_url( 'admin.php?page=authorizer&tab=external_oauth2' );
+			// If the Authorizer menu item is under Settings, point to that settings page.
+			if ( 'settings' === $auth_settings['advanced_admin_menu'] ) {
+				$authorizer_options_url = admin_url( 'options-general.php?page=authorizer&tab=external_oauth2' );
+			}
+			// If we're in multisite settings, point to that settings page instead.
+			if ( is_network_admin() ) {
+				$authorizer_options_url = network_admin_url( 'admin.php?page=authorizer&tab=external_oauth2' );
+			}
+
+			$oauth2_generic_servers_without_require_verified_email_and_verification_not_skipped = array();
+			if ( empty( $auth_settings['oauth2_num_servers'] ) ) :
+				$auth_settings['oauth2_num_servers'] = 1;
+			endif;
+			for ( $i = 1; $i <= $auth_settings['oauth2_num_servers']; $i++ ) :
+				$suffix = 1 === $i ? '' : '_' . $i;
+
+				// Allow constant or filter overrides of the skip email option.
+				$oauth2_dangerously_skip_email_verification = $auth_settings[ 'oauth2_dangerously_skip_email_verification' . $suffix ] ?? '';
+				if ( defined( 'AUTHORIZER_OAUTH2_' . $i . '_DANGEROUSLY_SKIP_EMAIL_VERIFICATION' ) ) {
+					$oauth2_dangerously_skip_email_verification = constant( 'AUTHORIZER_OAUTH2_' . $i . '_DANGEROUSLY_SKIP_EMAIL_VERIFICATION' );
+				}
+				// Also allow constant without server_id (applies to the first configured server).
+				if ( 1 === $i && defined( 'AUTHORIZER_OAUTH2_DANGEROUSLY_SKIP_EMAIL_VERIFICATION' ) ) {
+					$oauth2_dangerously_skip_email_verification = constant( 'AUTHORIZER_OAUTH2_DANGEROUSLY_SKIP_EMAIL_VERIFICATION' );
+				}
+				/**
+				 * Filters the Oauth2 Skip email verification option. A truthy value will skip verification.
+				 *
+				 * @since 3.9.0
+				 *
+				 * @param string $oauth2_dangerously_skip_email_verification  The existing Oauth2 Skip email verification option.
+				 */
+				$oauth2_dangerously_skip_email_verification = apply_filters( 'authorizer_oauth2_' . $i . '_dangerously_skip_email_verification', $oauth2_dangerously_skip_email_verification );
+				// Also allow filter without server_id (applies to the first configured server).
+				if ( 1 === $i ) {
+					$oauth2_dangerously_skip_email_verification = apply_filters( 'authorizer_oauth2_dangerously_skip_email_verification', $oauth2_dangerously_skip_email_verification );
+				}
+
+				if (
+					'generic' === $auth_settings[ 'oauth2_provider' . $suffix ] &&
+					! empty( $auth_settings[ 'oauth2_clientid' . $suffix ] ) &&
+					! empty( $auth_settings[ 'oauth2_clientsecret' . $suffix ] ) &&
+					empty( $auth_settings[ 'oauth2_require_verified_email' . $suffix ] ) &&
+					empty( $oauth2_dangerously_skip_email_verification )
+				) :
+					$oauth2_generic_servers_without_require_verified_email_and_verification_not_skipped[] = $i;
+				endif;
+			endfor;
+			if ( ! empty( $oauth2_generic_servers_without_require_verified_email_and_verification_not_skipped ) ) :
+				?>
+				<div class='notice notice-warning authorizer-warning-no-oauth2-email-verification'>
+					<p><?php esc_html_e( 'Warning: a configured OAuth2 (generic) server does not require verified emails.', 'authorizer' ); ?> <?php esc_html_e( 'Email verification will be automatically performed unless explicitly disabled with the "Skip email verification" option.', 'authorizer' ); ?> </p>
+					<p><?php esc_html_e( 'Email verification consists of a one-time email verification performed by clicking a link in an email sent to them from this WordPress server after a successful OAuth2 sign-in.', 'authorizer' ); ?> </p>
+					<?php foreach ( $oauth2_generic_servers_without_require_verified_email_and_verification_not_skipped as $server_id ) : ?>
+						<?php $suffix = 1 === $server_id ? '' : '_' . $server_id; ?>
+						<a href="<?php echo esc_attr( $authorizer_options_url ); ?>#auth_settings_oauth2_require_verified_email<?php echo esc_html( $suffix ); ?>" class="button button-primary"><?php esc_html_e( 'Review OAuth2 Server', 'authorizer' ); ?> #<?php echo esc_html( $server_id ); ?></a>
+					<?php endforeach; ?>
+				</div>
+				<?php
+			endif;
+		endif;
+
+		// Warn (only admins) on any OAuth2 Azure providers without Tenant ID
+		// restrictions (only warn if the provider has a configured Client ID/Secret
+		// to avoid warning users while they are still configuring the server).
+		if ( ! empty( $auth_settings['oauth2'] ) && current_user_can( 'create_users' ) ) :
+			// Get link to the default OAuth2 settings page.
+			$authorizer_options_url = admin_url( 'admin.php?page=authorizer&tab=external_oauth2' );
+			// If the Authorizer menu item is under Settings, point to that settings page.
+			if ( 'settings' === $auth_settings['advanced_admin_menu'] ) {
+				$authorizer_options_url = admin_url( 'options-general.php?page=authorizer&tab=external_oauth2' );
+			}
+			// If we're in multisite settings, point to that settings page instead.
+			if ( is_network_admin() ) {
+				$authorizer_options_url = network_admin_url( 'admin.php?page=authorizer&tab=external_oauth2' );
+			}
+
+			// Warn if any OAuth2 Azure servers have no Tenant ID restrictions.
+			$oauth2_azure_servers_without_tenant_restrictions = array();
+			if ( empty( $auth_settings['oauth2_num_servers'] ) ) :
+				$auth_settings['oauth2_num_servers'] = 1;
+			endif;
+			for ( $i = 1; $i <= $auth_settings['oauth2_num_servers']; $i++ ) :
+				$suffix = 1 === $i ? '' : '_' . $i;
+				if (
+					'azure' === $auth_settings[ 'oauth2_provider' . $suffix ] &&
+					! empty( $auth_settings[ 'oauth2_clientid' . $suffix ] ) &&
+					! empty( $auth_settings[ 'oauth2_clientsecret' . $suffix ] ) &&
+					( empty( $auth_settings[ 'oauth2_tenant_id' . $suffix ] ) || 'common' === $auth_settings[ 'oauth2_tenant_id' . $suffix ] )
+				) :
+					$oauth2_azure_servers_without_tenant_restrictions[] = $i;
+				endif;
+			endfor;
+			if ( ! empty( $oauth2_azure_servers_without_tenant_restrictions ) ) :
+				?>
+				<div class='notice notice-warning authorizer-warning-no-oauth2-email-verification'>
+					<p><?php esc_html_e( 'Warning: a configured OAuth2 Azure server does not have any Tenant ID restrictions.', 'authorizer' ); ?> <?php esc_html_e( 'Email verification will be automatically performed and cannot be disabled.', 'authorizer' ); ?> <a href="https://learn.microsoft.com/en-us/entra/identity-platform/claims-validation#validate-the-tenant"><?php esc_html_e( 'More Info', 'authorizer' ); ?></a></p>
+					<?php foreach ( $oauth2_azure_servers_without_tenant_restrictions as $server_id ) : ?>
+						<?php $suffix = 1 === $server_id ? '' : '_' . $server_id; ?>
+						<a href="<?php echo esc_attr( $authorizer_options_url ); ?>#auth_settings_oauth2_tenant_id<?php echo esc_html( $suffix ); ?>" class="button button-primary"><?php esc_html_e( 'Review OAuth2 Server', 'authorizer' ); ?> #<?php echo esc_html( $server_id ); ?></a>
+					<?php endforeach; ?>
+				</div>
+				<?php
+			endif;
+		endif;
+
+		// Show any ephemeral notices added with: `add_option( 'auth_settings_advanced_admin_notice, '' );`.
+		$notice = get_option( 'auth_settings_advanced_admin_notice' );
 		if ( $notice && strlen( $notice ) > 0 ) {
 			delete_option( 'auth_settings_advanced_admin_notice' );
 			?>
@@ -792,6 +932,16 @@ class Admin_Page extends Singleton {
 				)
 			);
 			add_settings_field(
+				'auth_settings_oauth2_dangerously_skip_email_verification' . $suffix,
+				$prefix . __( 'Skip email verification', 'authorizer' ),
+				array( Oauth2::get_instance(), 'print_checkbox_oauth2_dangerously_skip_email_verification' ),
+				'authorizer',
+				'auth_settings_external_oauth2',
+				array(
+					'oauth2_num_server' => $oauth2_num_server,
+				)
+			);
+			add_settings_field(
 				'auth_settings_oauth2_link_on_username' . $suffix,
 				$prefix . __( 'OAuth2 users linked by username', 'authorizer' ),
 				array( Oauth2::get_instance(), 'print_checkbox_oauth2_link_on_username' ),
@@ -977,6 +1127,16 @@ class Admin_Page extends Singleton {
 				'auth_settings_oidc_require_verified_email' . $suffix,
 				$prefix . __( 'Require verified email', 'authorizer' ),
 				array( Oidc::get_instance(), 'print_checkbox_oidc_require_verified_email' ),
+				'authorizer',
+				'auth_settings_external_oidc',
+				array(
+					'oidc_num_server' => $oidc_num_server,
+				)
+			);
+			add_settings_field(
+				'auth_settings_oidc_dangerously_skip_email_verification' . $suffix,
+				$prefix . __( 'Skip email verification', 'authorizer' ),
+				array( Oidc::get_instance(), 'print_checkbox_oidc_dangerously_skip_email_verification' ),
 				'authorizer',
 				'auth_settings_external_oidc',
 				array(
@@ -1677,6 +1837,17 @@ class Admin_Page extends Singleton {
 								</td>
 							</tr>
 							<tr>
+								<th scope="row"><?php echo esc_html( $prefix ); ?><?php esc_html_e( 'Skip email verification', 'authorizer' ); ?></th>
+								<td>
+									<?php
+									$oauth2->print_checkbox_oauth2_dangerously_skip_email_verification( array(
+										'context'         => Helper::NETWORK_CONTEXT,
+										'oauth2_num_server' => $oauth2_num_server,
+									) );
+									?>
+								</td>
+							</tr>
+							<tr>
 								<th scope="row"><?php echo esc_html( $prefix ); ?><?php esc_html_e( 'OAuth2 users linked by username', 'authorizer' ); ?></th>
 								<td>
 									<?php
@@ -1871,6 +2042,17 @@ class Admin_Page extends Singleton {
 								<td>
 									<?php
 									$oidc->print_checkbox_oidc_require_verified_email( array(
+										'context'         => Helper::NETWORK_CONTEXT,
+										'oidc_num_server' => $oidc_num_server,
+									) );
+									?>
+								</td>
+							</tr>
+							<tr>
+								<th scope="row"><?php echo esc_html( $prefix ); ?><?php esc_html_e( 'Skip email verification', 'authorizer' ); ?></th>
+								<td>
+									<?php
+									$oidc->print_checkbox_oidc_dangerously_skip_email_verification( array(
 										'context'         => Helper::NETWORK_CONTEXT,
 										'oidc_num_server' => $oidc_num_server,
 									) );
@@ -2234,7 +2416,7 @@ class Admin_Page extends Singleton {
 	 * Action: admin_head-index.php
 	 */
 	public function load_options_page() {
-		wp_enqueue_script( 'authorizer', plugins_url( 'js/authorizer.js', plugin_root() ), array( 'jquery-effects-shake' ), '3.16.0', true );
+		wp_enqueue_script( 'authorizer', plugins_url( 'js/authorizer.js', plugin_root() ), array( 'jquery-effects-shake' ), '3.17.2', true );
 		wp_localize_script(
 			'authorizer',
 			'authL10n',
@@ -2265,7 +2447,7 @@ class Admin_Page extends Singleton {
 
 		wp_enqueue_script( 'select2', plugins_url( 'vendor-custom/select2/4.0.13/dist/js/select2.min.js', plugin_root() ), array(), '4.0.13', true );
 
-		wp_register_style( 'authorizer-css', plugins_url( 'css/authorizer.css', plugin_root() ), array(), '3.14.2' );
+		wp_register_style( 'authorizer-css', plugins_url( 'css/authorizer.css', plugin_root() ), array(), '3.17.2' );
 		wp_enqueue_style( 'authorizer-css' );
 
 		wp_register_style( 'jquery-multi-select-css', plugins_url( 'vendor-custom/jquery.multi-select/0.9.12/css/multi-select.css', plugin_root() ), array(), '0.9.12' );

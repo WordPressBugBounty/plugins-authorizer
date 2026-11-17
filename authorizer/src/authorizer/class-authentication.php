@@ -269,6 +269,13 @@ class Authentication extends Singleton {
 					}
 				}
 
+				// Edge case: If we already received an error from one of our custom
+				// authenticate functions (e.g., pending email verification), return
+				// that error instead of the default error below.
+				if ( is_wp_error( $result ) ) {
+					return $result;
+				}
+
 				remove_filter( 'authenticate', 'wp_authenticate_username_password', 20, 3 );
 				remove_filter( 'authenticate', 'wp_authenticate_email_password', 20, 3 );
 
@@ -411,6 +418,93 @@ class Authentication extends Singleton {
 			}
 		}
 
+		// If this is an OAuth2 (generic) login and "require verified email address"
+		// is not enabled, and "skip email verification" is not enabled, then update
+		// OAuth2 user meta for the successfully logged in user if it was set in a
+		// transient after verifying the email address.
+		if ( $user && 'oauth2' === $authenticated_by ) {
+			$oauth2_server_id              = isset( $result['oauth2_server_id'] ) ? intval( $result['oauth2_server_id'] ) : 1;
+			$suffix                        = $oauth2_server_id > 1 ? '_' . $oauth2_server_id : '';
+			$is_oauth2_generic_provider    = isset( $auth_settings[ 'oauth2_provider' . $suffix ] ) && 'generic' === $auth_settings[ 'oauth2_provider' . $suffix ];
+			$oauth2_require_verified_email = $auth_settings[ 'oauth2_require_verified_email' . $suffix ] ?? '';
+			// Allow constant or filter overrides of this option.
+			$oauth2_dangerously_skip_email_verification = $auth_settings[ 'oauth2_dangerously_skip_email_verification' . $suffix ] ?? '';
+			if ( defined( 'AUTHORIZER_OAUTH2_' . $oauth2_server_id . '_DANGEROUSLY_SKIP_EMAIL_VERIFICATION' ) ) {
+				$oauth2_dangerously_skip_email_verification = constant( 'AUTHORIZER_OAUTH2_' . $oauth2_server_id . '_DANGEROUSLY_SKIP_EMAIL_VERIFICATION' );
+			}
+			// Also allow constant without server_id (applies to the first configured server).
+			if ( 1 === $oauth2_server_id && defined( 'AUTHORIZER_OAUTH2_DANGEROUSLY_SKIP_EMAIL_VERIFICATION' ) ) {
+				$oauth2_dangerously_skip_email_verification = constant( 'AUTHORIZER_OAUTH2_DANGEROUSLY_SKIP_EMAIL_VERIFICATION' );
+			}
+			/**
+			 * Filters the Oauth2 Skip email verification option. A truthy value will skip verification.
+			 *
+			 * @since 3.9.0
+			 *
+			 * @param string $oauth2_dangerously_skip_email_verification  The existing Oauth2 Skip email verification option.
+			 */
+			$oauth2_dangerously_skip_email_verification = apply_filters( 'authorizer_oauth2_' . $oauth2_server_id . '_dangerously_skip_email_verification', $oauth2_dangerously_skip_email_verification );
+			// Also allow filter without server_id (applies to the first configured server).
+			if ( 1 === $oauth2_server_id ) {
+				$oauth2_dangerously_skip_email_verification = apply_filters( 'authorizer_oauth2_dangerously_skip_email_verification', $oauth2_dangerously_skip_email_verification );
+			}
+
+			if ( $is_oauth2_generic_provider && '1' !== $oauth2_require_verified_email && empty( $oauth2_dangerously_skip_email_verification ) ) {
+				$sub = get_transient( 'authorizer_oauth2_generic_sub_for_' . $user->user_email );
+				$url = get_transient( 'authorizer_oauth2_generic_url_for_' . $user->user_email );
+				// Copy transients to user meta.
+				if ( ! empty( $sub ) && ! empty( $url ) ) {
+					update_user_meta( $user->ID, 'authorizer_oauth2_generic_sub_for_url_' . substr( $url, 0, 98 ), $sub );
+					delete_transient( 'authorizer_oauth2_generic_sub_for_' . $user->user_email );
+					delete_transient( 'authorizer_oauth2_generic_url_for_' . $user->user_email );
+					delete_transient( 'authorizer_oauth2_generic_sub_' . $sub . '_url_' . substr( $url, 0, 98 ) . '_' . $oauth2_server_id );
+				}
+			}
+		}
+
+		// If this is an OIDC login and "require verified email address" is not
+		// enabled, and "skip email verification" is not enabled, then update OIDC
+		// user meta for the successfully logged in user if it was set in a
+		// transient after verifying the email address.
+		if ( $user && 'oidc' === $authenticated_by ) {
+			$oidc_server_id = isset( $result['oidc_server_id'] ) ? intval( $result['oidc_server_id'] ) : 1;
+			$suffix         = $oidc_server_id > 1 ? '_' . $oidc_server_id : '';
+			$oidc_require_verified_email = $auth_settings[ 'oidc_require_verified_email' . $suffix ] ?? '';
+			// Allow constant or filter overrides of this option.
+			$oidc_dangerously_skip_email_verification = $auth_settings[ 'oidc_dangerously_skip_email_verification' . $suffix ] ?? '';
+			if ( defined( 'AUTHORIZER_OIDC_' . $oidc_server_id . '_DANGEROUSLY_SKIP_EMAIL_VERIFICATION' ) ) {
+				$oidc_dangerously_skip_email_verification = constant( 'AUTHORIZER_OIDC_' . $oidc_server_id . '_DANGEROUSLY_SKIP_EMAIL_VERIFICATION' );
+			}
+			// Also allow constant without server_id (applies to the first configured server).
+			if ( 1 === $oidc_server_id && defined( 'AUTHORIZER_OIDC_DANGEROUSLY_SKIP_EMAIL_VERIFICATION' ) ) {
+				$oidc_dangerously_skip_email_verification = constant( 'AUTHORIZER_OIDC_DANGEROUSLY_SKIP_EMAIL_VERIFICATION' );
+			}
+			/**
+			 * Filters the OIDC Skip email verification option. A truthy value will skip verification.
+			 *
+			 * @since 3.9.0
+			 *
+			 * @param string $oidc_dangerously_skip_email_verification  The existing OIDC Skip email verification option.
+			 */
+			$oidc_dangerously_skip_email_verification = apply_filters( 'authorizer_oidc_' . $oidc_server_id . '_dangerously_skip_email_verification', $oidc_dangerously_skip_email_verification );
+			// Also allow filter without server_id (applies to the first configured server).
+			if ( 1 === $oidc_server_id ) {
+				$oidc_dangerously_skip_email_verification = apply_filters( 'authorizer_oidc_dangerously_skip_email_verification', $oidc_dangerously_skip_email_verification );
+			}
+
+			if ( '1' !== $oidc_require_verified_email && empty( $oidc_dangerously_skip_email_verification ) ) {
+				$sub = get_transient( 'authorizer_oidc_sub_for_' . $user->user_email );
+				$iss = get_transient( 'authorizer_oidc_iss_for_' . $user->user_email );
+				// Copy transients to user meta.
+				if ( ! empty( $sub ) && ! empty( $iss ) ) {
+					update_user_meta( $user->ID, 'authorizer_oidc_sub_for_iss_' . substr( $iss, 0, 108 ), $sub );
+					delete_transient( 'authorizer_oidc_sub_for_' . $user->user_email );
+					delete_transient( 'authorizer_oidc_iss_for_' . $user->user_email );
+					delete_transient( 'authorizer_oidc_sub_' . $sub . '_iss_' . substr( $iss, 0, 108 ) . '_' . $oidc_server_id );
+				}
+			}
+		}
+
 		// Integration: disable Cloudflare Turnstile verification from the
 		// simple-cloudflare-turnstile plugin if it is activated (conflicts with
 		// our redirects from external services). We assume that we dont't need bot
@@ -484,6 +578,28 @@ class Authentication extends Singleton {
 		$oauth2_attr_last_name         = $auth_settings[ 'oauth2_attr_last_name' . $suffix ] ?? '';
 		$oauth2_require_verified_email = $auth_settings[ 'oauth2_require_verified_email' . $suffix ] ?? '';
 		$oauth2_link_on_username       = $auth_settings[ 'oauth2_link_on_username' . $suffix ] ?? '';
+
+		// Allow constant or filter overrides of this option.
+		$oauth2_dangerously_skip_email_verification = $auth_settings[ 'oauth2_dangerously_skip_email_verification' . $suffix ] ?? '';
+		if ( defined( 'AUTHORIZER_OAUTH2_' . $oauth2_server_id . '_DANGEROUSLY_SKIP_EMAIL_VERIFICATION' ) ) {
+			$oauth2_dangerously_skip_email_verification = constant( 'AUTHORIZER_OAUTH2_' . $oauth2_server_id . '_DANGEROUSLY_SKIP_EMAIL_VERIFICATION' );
+		}
+		// Also allow constant without server_id (applies to the first configured server).
+		if ( 1 === $oauth2_server_id && defined( 'AUTHORIZER_OAUTH2_DANGEROUSLY_SKIP_EMAIL_VERIFICATION' ) ) {
+			$oauth2_dangerously_skip_email_verification = constant( 'AUTHORIZER_OAUTH2_DANGEROUSLY_SKIP_EMAIL_VERIFICATION' );
+		}
+		/**
+		 * Filters the Oauth2 Skip email verification option.
+		 *
+		 * @since 3.9.0
+		 *
+		 * @param string $oauth2_dangerously_skip_email_verification  The existing Oauth2 Skip email verification option.
+		 */
+		$oauth2_dangerously_skip_email_verification = apply_filters( 'authorizer_oauth2_' . $oauth2_server_id . '_dangerously_skip_email_verification', $oauth2_dangerously_skip_email_verification );
+		// Also allow filter without server_id (applies to the first configured server).
+		if ( 1 === $oauth2_server_id ) {
+			$oauth2_dangerously_skip_email_verification = apply_filters( 'authorizer_oauth2_dangerously_skip_email_verification', $oauth2_dangerously_skip_email_verification );
+		}
 
 		// Fetch the Oauth2 Client ID (allow overrides from filter or constant).
 		// Note: constant/filter overrides are only supported for a single OAuth2 server.
@@ -598,7 +714,7 @@ class Authentication extends Singleton {
 					// Look up user using token.
 					$user       = $provider->getResourceOwner( $token );
 					$attributes = $user->toArray();
-					$email      = $user->getEmail();
+					$email      = sanitize_email( $user->getEmail() );
 					$username   = $user->getNickname();
 
 					// If user has no public email, fetch all emails and use those.
@@ -615,7 +731,7 @@ class Authentication extends Singleton {
 									return false;
 								}
 
-								return $entry['email'];
+								return sanitize_email( $entry['email'] );
 							},
 							(array) $provider->getParsedResponse( $request )
 						) );
@@ -720,7 +836,7 @@ class Authentication extends Singleton {
 					// Look up user using token.
 					$user       = $provider->getResourceOwner( $token );
 					$attributes = $user->toArray();
-					$email      = empty( $attributes['email'] ) ? '' : $attributes['email'];
+					$email      = empty( $attributes['email'] ) ? '' : sanitize_email( $attributes['email'] );
 					$username   = empty( $attributes['preferred_username'] ) ? '' : $attributes['preferred_username'];
 				} catch ( \Exception $e ) {
 					// Failed to get user details.
@@ -751,8 +867,11 @@ class Authentication extends Singleton {
 						$verified_oid = get_user_meta( $wpuser->ID, 'authorizer_oauth2_azure_oid_for_tid_' . $verified_tid, true );
 					}
 
-					// Validate the object ID of the logging in user.
-					if ( empty( $verified_tid ) || empty( $verified_oid ) ) {
+					// Send an email to validate the object ID of the logging in user
+					// (skip if one was already sent; the transient lasts one hour, so a
+					// user can receive at most 1 email per hour).
+					$email_transient = get_transient( 'authorizer_oauth2_azure_oid_' . $oid . '_tid_' . $tid . '_' . $oauth2_server_id );
+					if ( empty( $email_transient ) && ( empty( $verified_tid ) || empty( $verified_oid ) ) ) {
 						// If there are no saved tenant ID or object ID, send a verification
 						// email. After the user clicks the link in the email, they will
 						// replay the authentication flow and end up here to check again.
@@ -766,13 +885,13 @@ class Authentication extends Singleton {
 							'nonce'  => wp_create_nonce( 'authorizer_oauth2_azure_verify_email_nonce_oid_' . $oid ),
 						);
 						$verification_url = add_query_arg( $args, admin_url( 'admin-post.php' ) );
-						set_transient( 'authorizer_oauth2_azure_oid_' . $oid . '_tid_' . $tid . '_' . $oauth2_server_id, $username . ' , ' . $email . ' , ' . $args['token'], DAY_IN_SECONDS );
+						set_transient( 'authorizer_oauth2_azure_oid_' . $oid . '_tid_' . $tid . '_' . $oauth2_server_id, $username . ' , ' . $email . ' , ' . $args['token'], HOUR_IN_SECONDS );
 						wp_mail(
 							$email,
 							__( 'Action required: Verify your email address', 'authorizer' ),
 							sprintf(
 								/* TRANSLATORS: 1: Name of site 2: Site URL 3: Verification URL */
-								__( "Someone (hopefully you) signed into the website at:\n\n%1\$s\n%2\$s\n\nIf this was you, please visit the following link to verify your email and finish signing in:\n%3\$s\n", 'authorizer' ),
+								__( "Someone (hopefully you) signed into the website at:\n\n%1\$s\n%2\$s\n\nIf this was you, please visit the following link to verify your email and finish signing in:\n%3\$s\n\nIf you did not just attempt to sign in, do not click this link; someone may be trying to access your account.\n", 'authorizer' ),
 								get_bloginfo( 'name' ),
 								get_bloginfo( 'url' ),
 								$verification_url
@@ -912,7 +1031,8 @@ class Authentication extends Singleton {
 					// Look up user using token.
 					$user       = $provider->getResourceOwner( $token );
 					$attributes = $user->toArray();
-					$email      = empty( $attributes['email'] ) ? '' : $attributes['email'];
+					$sub        = empty( $attributes['sub'] ) ? '' : $attributes['sub'];
+					$email      = empty( $attributes['email'] ) ? '' : sanitize_email( $attributes['email'] );
 					$username   = empty( $attributes['preferred_username'] ) ? '' : $attributes['preferred_username'];
 				} catch ( \Exception $e ) {
 					// Failed to get user details.
@@ -931,15 +1051,84 @@ class Authentication extends Singleton {
 				// Get custom email attribute, if specified.
 				if ( ! empty( $oauth2_attr_email ) && ! empty( $attributes[ $oauth2_attr_email ] ) ) {
 					if ( is_string( $attributes[ $oauth2_attr_email ] ) ) {
-						$email = trim( $attributes[ $oauth2_attr_email ] );
+						$email = sanitize_email( trim( $attributes[ $oauth2_attr_email ] ) );
 					} elseif ( is_array( $attributes[ $oauth2_attr_email ] ) ) {
-						$email = $attributes[ $oauth2_attr_email ];
+						$email = array_filter( array_map( 'sanitize_email', $attributes[ $oauth2_attr_email ] ) );
 					}
 				}
 
-				// Enforce email verification if required.
+				// Enforce verified_email claim if required.
 				if ( '1' === $oauth2_require_verified_email ) {
-					if ( empty( $attributes['email_verified'] ) || true !== $attributes['email_verified'] ) {
+					if ( ! Helper::isVariantOfJSONTrue( $attributes['email_verified'] ?? false ) ) {
+						return new \WP_Error( 'oauth2_email_not_verified', __( '<strong>ERROR</strong>: Email address must be verified to log in.', 'authorizer' ) );
+					}
+				}
+
+				// Manually perform email verification if verified_email claim is not
+				// required and "skip email verification" option has not been explicitly
+				// set.
+				if ( '1' !== $oauth2_require_verified_email && empty( $oauth2_dangerously_skip_email_verification ) ) {
+					if ( empty( $email ) ) {
+						return new \WP_Error( 'oauth2_email_not_verified', __( '<strong>ERROR</strong>: Email address must be verified to log in.', 'authorizer' ) );
+					}
+
+					$wpuser = get_user_by( 'email', $email );
+
+					// First look for a transient that was set when they confirmed their
+					// email (for return users, the values are moved to user meta).
+					$verified_url = get_transient( 'authorizer_oauth2_generic_url_for_' . $email );
+					$verified_sub = get_transient( 'authorizer_oauth2_generic_sub_for_' . $email );
+					if ( ! empty( $wpuser ) && empty( $verified_url ) ) {
+						$verified_url = $oauth2_url_authorize;
+						$verified_sub = get_user_meta( $wpuser->ID, 'authorizer_oauth2_generic_sub_for_url_' . substr( $verified_url, 0, 98 ), true );
+					}
+
+					// Send an email to validate the object ID of the logging in user
+					// (skip if one was already sent; the transient lasts one hour, so a
+					// user can receive at most 1 email per hour).
+					$email_transient = get_transient( 'authorizer_oauth2_generic_sub_' . $sub . '_url_' . substr( $oauth2_url_authorize, 0, 98 ) . '_' . $oauth2_server_id );
+					if ( empty( $email_transient ) && ( empty( $verified_url ) || empty( $verified_sub ) ) ) {
+						// If there are no saved authorization url or subject claim, send a
+						// verification email. After the user clicks the link in the email,
+						// they will replay the authentication flow and end up here to check
+						// again.
+						$args             = array(
+							'action' => 'authorizer_oauth2_generic_verify_email',
+							'url'    => $oauth2_url_authorize,
+							'sub'    => $sub,
+							'server' => $oauth2_server_id,
+							'email'  => $email,
+							'token'  => wp_generate_uuid4(),
+							'nonce'  => wp_create_nonce( 'authorizer_oauth2_generic_verify_email_nonce_sub_' . $sub ),
+						);
+						$verification_url = add_query_arg( $args, admin_url( 'admin-post.php' ) );
+						set_transient( 'authorizer_oauth2_generic_sub_' . $sub . '_url_' . substr( $oauth2_url_authorize, 0, 98 ) . '_' . $oauth2_server_id, $username . ' , ' . $email . ' , ' . $args['token'], HOUR_IN_SECONDS );
+						wp_mail(
+							$email,
+							__( 'Action required: Verify your email address', 'authorizer' ),
+							sprintf(
+								/* TRANSLATORS: 1: Name of site 2: Site URL 3: Verification URL */
+								__( "Someone (hopefully you) signed into the website at:\n\n%1\$s\n%2\$s\n\nIf this was you, please visit the following link to verify your email and finish signing in:\n%3\$s\n\nIf you did not just attempt to sign in, do not click this link; someone may be trying to access your account.\n", 'authorizer' ),
+								get_bloginfo( 'name' ),
+								get_bloginfo( 'url' ),
+								$verification_url
+							)
+						);
+						// Notify the user to check their email.
+						return new \WP_Error(
+							'oauth2_pending_verification',
+							sprintf(
+								/* TRANSLATORS: Email */
+								__( '<strong>Email verification required</strong>: Please check your inbox (%s) for a verification email and click the link to finish signing in.', 'authorizer' ),
+								$email
+							)
+						);
+					} elseif ( $verified_sub !== $sub ) {
+						// If the subject claim doesn't match the response, deny the login
+						// and delete the transients granting access (in case a legitimate
+						// user clicked the link in an email triggered by an impersonator).
+						delete_transient( 'authorizer_oauth2_generic_url_for_' . $email );
+						delete_transient( 'authorizer_oauth2_generic_sub_for_' . $email );
 						return new \WP_Error( 'oauth2_email_not_verified', __( '<strong>ERROR</strong>: Email address must be verified to log in.', 'authorizer' ) );
 					}
 				}
@@ -1108,6 +1297,28 @@ class Authentication extends Singleton {
 		$oidc_link_on_username       = $auth_settings[ 'oidc_link_on_username' . $suffix ] ?? '';
 		$oidc_hosteddomain           = $auth_settings[ 'oidc_hosteddomain' . $suffix ] ?? '';
 
+		// Allow constant or filter overrides of this option.
+		$oidc_dangerously_skip_email_verification = $auth_settings[ 'oidc_dangerously_skip_email_verification' . $suffix ] ?? '';
+		if ( defined( 'AUTHORIZER_OIDC_' . $oidc_server_id . '_DANGEROUSLY_SKIP_EMAIL_VERIFICATION' ) ) {
+			$oidc_dangerously_skip_email_verification = constant( 'AUTHORIZER_OIDC_' . $oidc_server_id . '_DANGEROUSLY_SKIP_EMAIL_VERIFICATION' );
+		}
+		// Also allow constant without server_id (applies to the first configured server).
+		if ( 1 === $oidc_server_id && defined( 'AUTHORIZER_OIDC_DANGEROUSLY_SKIP_EMAIL_VERIFICATION' ) ) {
+			$oidc_dangerously_skip_email_verification = constant( 'AUTHORIZER_OIDC_DANGEROUSLY_SKIP_EMAIL_VERIFICATION' );
+		}
+		/**
+		 * Filters the OIDC Skip email verification option.
+		 *
+		 * @since 3.9.0
+		 *
+		 * @param string $oidc_dangerously_skip_email_verification  The existing OIDC Skip email verification option.
+		 */
+		$oidc_dangerously_skip_email_verification = apply_filters( 'authorizer_oidc_' . $oidc_server_id . '_dangerously_skip_email_verification', $oidc_dangerously_skip_email_verification );
+		// Also allow filter without server_id (applies to the first configured server).
+		if ( 1 === $oidc_server_id ) {
+			$oidc_dangerously_skip_email_verification = apply_filters( 'authorizer_oidc_dangerously_skip_email_verification', $oidc_dangerously_skip_email_verification );
+		}
+
 		// Fetch the OIDC Client ID (allow overrides from filter or constant).
 		// Note: constant/filter overrides are only supported for a single OIDC server.
 		if ( 1 === $oidc_server_id && defined( 'AUTHORIZER_OIDC_CLIENT_ID' ) ) {
@@ -1242,6 +1453,11 @@ class Authentication extends Singleton {
 				// ID token payload unavailable.
 			}
 
+			// Get the issuer and subject claims from the verified claims response.
+			$verified_claims = $oidc->getVerifiedClaims();
+			$iss             = empty( $verified_claims->iss ) ? '' : $verified_claims->iss;
+			$sub             = empty( $verified_claims->sub ) ? '' : $verified_claims->sub;
+
 			// Merge ID token claims with userinfo (userinfo takes precedence).
 			$user_info = array_merge( $id_token_payload, $user_info );
 
@@ -1272,11 +1488,79 @@ class Authentication extends Singleton {
 					return new \WP_Error( 'oidc_no_email', __( '<strong>ERROR</strong>: OIDC provider did not return an email address.', 'authorizer' ) );
 				}
 
-				// Enforce email verification if required.
+				// Enforce email_verified claim if required.
 				if ( '1' === $oidc_require_verified_email ) {
-					if ( empty( $user_info['email_verified'] ) || true !== $user_info['email_verified'] ) {
+					if ( ! Helper::isVariantOfJSONTrue( $user_info['email_verified'] ?? false ) ) {
 						// Clean up session variables before returning error.
 						\Authorizer\Options\External\Oidc::get_instance()->maybe_unset_oidc_session_vars();
+						return new \WP_Error( 'oidc_email_not_verified', __( '<strong>ERROR</strong>: Email address must be verified to log in.', 'authorizer' ) );
+					}
+				}
+
+				// Manually perform email verification if verified_email claim is not
+				// required and "skip email verification" option has not been explicitly
+				// set.
+				if ( '1' !== $oidc_require_verified_email && empty( $oidc_dangerously_skip_email_verification ) ) {
+					if ( empty( $email ) ) {
+						return new \WP_Error( 'oidc_email_not_verified', __( '<strong>ERROR</strong>: Email address must be verified to log in.', 'authorizer' ) );
+					}
+
+					$wpuser = get_user_by( 'email', $email );
+
+					// First look for a transient that was set when they confirmed their
+					// email (for return users, the values are moved to user meta).
+					$verified_iss = get_transient( 'authorizer_oidc_iss_for_' . $email );
+					$verified_sub = get_transient( 'authorizer_oidc_sub_for_' . $email );
+					if ( ! empty( $wpuser ) && empty( $verified_iss ) ) {
+						$verified_iss = $iss;
+						$verified_sub = get_user_meta( $wpuser->ID, 'authorizer_oidc_sub_for_iss_' . substr( $verified_iss, 0, 108 ), true );
+					}
+
+					// Send an email to validate the object ID of the logging in user
+					// (skip if one was already sent; the transient lasts one hour, so a
+					// user can receive at most 1 email per hour).
+					$email_transient = get_transient( 'authorizer_oidc_sub_' . $sub . '_iss_' . substr( $iss, 0, 108 ) . '_' . $oidc_server_id );
+					if ( empty( $email_transient ) && ( empty( $verified_iss ) || empty( $verified_sub ) ) ) {
+						// If there are no saved iss or subject claims, send a verification
+						// email. After the user clicks the link in the email, they will
+						// replay the authentication flow and end up here to check again.
+						$args             = array(
+							'action' => 'authorizer_oidc_verify_email',
+							'iss'    => $iss,
+							'sub'    => $sub,
+							'server' => $oidc_server_id,
+							'email'  => $email,
+							'token'  => wp_generate_uuid4(),
+							'nonce'  => wp_create_nonce( 'authorizer_oidc_verify_email_nonce_sub_' . $sub ),
+						);
+						$verification_url = add_query_arg( $args, admin_url( 'admin-post.php' ) );
+						set_transient( 'authorizer_oidc_sub_' . $sub . '_iss_' . substr( $iss, 0, 108 ) . '_' . $oidc_server_id, $username . ' , ' . $email . ' , ' . $args['token'], HOUR_IN_SECONDS );
+						wp_mail(
+							$email,
+							__( 'Action required: Verify your email address', 'authorizer' ),
+							sprintf(
+								/* TRANSLATORS: 1: Name of site 2: Site URL 3: Verification URL */
+								__( "Someone (hopefully you) signed into the website at:\n\n%1\$s\n%2\$s\n\nIf this was you, please visit the following link to verify your email and finish signing in:\n%3\$s\n\nIf you did not just attempt to sign in, do not click this link; someone may be trying to access your account.\n", 'authorizer' ),
+								get_bloginfo( 'name' ),
+								get_bloginfo( 'url' ),
+								$verification_url
+							)
+						);
+						// Notify the user to check their email.
+						return new \WP_Error(
+							'oidc_pending_verification',
+							sprintf(
+								/* TRANSLATORS: Email */
+								__( '<strong>Email verification required</strong>: Please check your inbox (%s) for a verification email and click the link to finish signing in.', 'authorizer' ),
+								$email
+							)
+						);
+					} elseif ( $verified_sub !== $sub ) {
+						// If the subject claim doesn't match the response, deny the login
+						// and delete the transients granting access (in case a legitimate
+						// user clicked the link in an email triggered by an impersonator).
+						delete_transient( 'authorizer_oidc_iss_for_' . $email );
+						delete_transient( 'authorizer_oidc_sub_for_' . $email );
 						return new \WP_Error( 'oidc_email_not_verified', __( '<strong>ERROR</strong>: Email address must be verified to log in.', 'authorizer' ) );
 					}
 				}
@@ -1445,7 +1729,7 @@ class Authentication extends Singleton {
 		}
 
 		// Get email address.
-		$email = Helper::lowercase( $payload['email'] );
+		$email = Helper::lowercase( sanitize_email( $payload['email'] ) );
 
 		$email_domain = substr( strrchr( $email, '@' ), 1 );
 		$username     = current( explode( '@', $email ) );
@@ -2387,6 +2671,14 @@ class Authentication extends Singleton {
 			die();
 		}
 
+		// If user is logged in, log them out first before continuing below (else
+		// the nonce won't match because nonce's are unique per user, and the nonce
+		// was set for the "anonymous" user).
+		if ( is_user_logged_in() ) {
+			wp_logout();
+			unset( $_COOKIE[ LOGGED_IN_COOKIE ] );
+		}
+
 		// Verify nonce.
 		if ( ! wp_verify_nonce( $nonce, 'authorizer_oauth2_azure_verify_email_nonce_oid_' . $oid ) ) {
 			wp_nonce_ays( 'authorizer_oauth2_azure_verify_email_nonce' );
@@ -2414,6 +2706,170 @@ class Authentication extends Singleton {
 
 		// Redirect back to OAuth2 Azure authentication flow to complete the login.
 		$querystring = array( 'external' => 'oauth2' );
+		if ( $server > 1 ) {
+			$querystring['id'] = $server;
+		}
+		$url = add_query_arg( $querystring, wp_login_url( home_url() ) );
+		wp_safe_redirect( $url );
+	}
+
+	/**
+	 * When an OAuth2 (generic) user authenticates for the first time, if "require
+	 * verified email address" is not enabled, and "skip email verification" is
+	 * not enabled, then their email address is sent a verification email to
+	 * confirm ownership. This function handles the magic link sent in that email
+	 * and associates the user's subject (sub) and authorization URL (url) claims
+	 * with their WordPress account (via user meta).
+	 *
+	 * @url wp-admin/admin-post.php?action=authorizer_oauth2_generic_verify_email
+	 * @action admin_post_nopriv_authorizer_oauth2_generic_verify_email
+	 *
+	 * param $_REQUEST['action'] The name of this admin post action.
+	 * param $_REQUEST['url']    The authorization URL of the server.
+	 * param $_REQUEST['sub']    The subject claim of the user.
+	 * param $_REQUEST['server'] The OAuth2 config ID for this server.
+	 * param $_REQUEST['email']  The email of the user.
+	 * param $_REQUEST['token']  The token to verify against the transient set during login.
+	 * param $_REQUEST['nonce']  Security nonce.
+	 *
+	 * @return void
+	 */
+	public function oauth2_generic_verify_email() {
+		// Ensure params are set.
+		$url    = sanitize_url( wp_unslash( $_REQUEST['url'] ?? '' ) );
+		$sub    = sanitize_key( wp_unslash( $_REQUEST['sub'] ?? '' ) );
+		$server = absint( wp_unslash( $_REQUEST['server'] ?? '' ) );
+		$email  = sanitize_email( wp_unslash( $_REQUEST['email'] ?? '' ) );
+		$token  = sanitize_key( wp_unslash( $_REQUEST['token'] ?? '' ) );
+		$nonce  = sanitize_key( wp_unslash( $_REQUEST['nonce'] ?? '' ) );
+		if (
+			empty( $_REQUEST['url'] ) ||
+			empty( $_REQUEST['sub'] ) ||
+			empty( $_REQUEST['server'] ) ||
+			empty( $_REQUEST['email'] ) ||
+			empty( $_REQUEST['token'] ) ||
+			empty( $_REQUEST['nonce'] )
+		) {
+			die();
+		}
+
+		// If user is logged in, log them out first before continuing below (else
+		// the nonce won't match because nonce's are unique per user, and the nonce
+		// was set for the "anonymous" user).
+		if ( is_user_logged_in() ) {
+			wp_logout();
+			unset( $_COOKIE[ LOGGED_IN_COOKIE ] );
+		}
+
+		// Verify nonce.
+		if ( ! wp_verify_nonce( $nonce, 'authorizer_oauth2_generic_verify_email_nonce_sub_' . $sub ) ) {
+			wp_nonce_ays( 'authorizer_oauth2_generic_verify_email_nonce' );
+			die();
+		}
+
+		// Validate email and token.
+		$username_email_token = get_transient( 'authorizer_oauth2_generic_sub_' . $sub . '_url_' . substr( $url, 0, 98 ) . '_' . $server );
+		if ( empty( $username_email_token ) ) {
+			die();
+		}
+		$username_email_token = explode( ' , ', $username_email_token );
+		if ( 3 !== count( $username_email_token ) ) {
+			die();
+		}
+		if ( $email !== $username_email_token[1] || $token !== $username_email_token[2] ) {
+			die();
+		}
+
+		// We now have a verified email from a valid OAuth2 (generic) login, so we
+		// can save the user's url+sub to a transient. This will be copied to user
+		// meta later (when they return to the authentication flow after this).
+		set_transient( 'authorizer_oauth2_generic_sub_for_' . $email, $sub, DAY_IN_SECONDS );
+		set_transient( 'authorizer_oauth2_generic_url_for_' . $email, $url, DAY_IN_SECONDS );
+
+		// Redirect back to OAuth2 (generic) authentication flow to complete the login.
+		$querystring = array( 'external' => 'oauth2' );
+		if ( $server > 1 ) {
+			$querystring['id'] = $server;
+		}
+		$url = add_query_arg( $querystring, wp_login_url( home_url() ) );
+		wp_safe_redirect( $url );
+	}
+
+	/**
+	 * When an OIDC user authenticates for the first time, if "require verified
+	 * email address" is not enabled, and "skip email verification" is not
+	 * enabled, then their email address is sent a verification email to confirm
+	 * ownership. This function handles the magic link sent in that email and
+	 * associates the user's subject (sub) and issuer (iss) claims with their
+	 * WordPress account (via user meta).
+	 *
+	 * @url wp-admin/admin-post.php?action=authorizer_oidc_verify_email
+	 * @action admin_post_nopriv_authorizer_oidc_verify_email
+	 *
+	 * param $_REQUEST['action'] The name of this admin post action.
+	 * param $_REQUEST['iss']    The issuer claim of the server.
+	 * param $_REQUEST['sub']    The subject claim of the user.
+	 * param $_REQUEST['server'] The OIDC config ID for this server.
+	 * param $_REQUEST['email']  The email of the user.
+	 * param $_REQUEST['token']  The token to verify against the transient set during login.
+	 * param $_REQUEST['nonce']  Security nonce.
+	 *
+	 * @return void
+	 */
+	public function oidc_verify_email() {
+		// Ensure params are set.
+		$iss    = sanitize_url( wp_unslash( $_REQUEST['iss'] ?? '' ) );
+		$sub    = sanitize_key( wp_unslash( $_REQUEST['sub'] ?? '' ) );
+		$server = absint( wp_unslash( $_REQUEST['server'] ?? '' ) );
+		$email  = sanitize_email( wp_unslash( $_REQUEST['email'] ?? '' ) );
+		$token  = sanitize_key( wp_unslash( $_REQUEST['token'] ?? '' ) );
+		$nonce  = sanitize_key( wp_unslash( $_REQUEST['nonce'] ?? '' ) );
+		if (
+			empty( $_REQUEST['iss'] ) ||
+			empty( $_REQUEST['sub'] ) ||
+			empty( $_REQUEST['server'] ) ||
+			empty( $_REQUEST['email'] ) ||
+			empty( $_REQUEST['token'] ) ||
+			empty( $_REQUEST['nonce'] )
+		) {
+			die();
+		}
+
+		// If user is logged in, log them out first before continuing below (else
+		// the nonce won't match because nonce's are unique per user, and the nonce
+		// was set for the "anonymous" user).
+		if ( is_user_logged_in() ) {
+			wp_logout();
+			unset( $_COOKIE[ LOGGED_IN_COOKIE ] );
+		}
+
+		// Verify nonce.
+		if ( ! wp_verify_nonce( $nonce, 'authorizer_oidc_verify_email_nonce_sub_' . $sub ) ) {
+			wp_nonce_ays( 'authorizer_oidc_verify_email_nonce' );
+			die();
+		}
+
+		// Validate email and token.
+		$username_email_token = get_transient( 'authorizer_oidc_sub_' . $sub . '_iss_' . substr( $iss, 0, 108 ) . '_' . $server );
+		if ( empty( $username_email_token ) ) {
+			die();
+		}
+		$username_email_token = explode( ' , ', $username_email_token );
+		if ( 3 !== count( $username_email_token ) ) {
+			die();
+		}
+		if ( $email !== $username_email_token[1] || $token !== $username_email_token[2] ) {
+			die();
+		}
+
+		// We now have a verified email from a valid OIDC login, so we can save the
+		// user's iss+sub to a transient. This will be copied to user meta later
+		// (when they return to the authentication flow after this).
+		set_transient( 'authorizer_oidc_sub_for_' . $email, $sub, DAY_IN_SECONDS );
+		set_transient( 'authorizer_oidc_iss_for_' . $email, $iss, DAY_IN_SECONDS );
+
+		// Redirect back to OIDC authentication flow to complete the login.
+		$querystring = array( 'external' => 'oidc' );
 		if ( $server > 1 ) {
 			$querystring['id'] = $server;
 		}

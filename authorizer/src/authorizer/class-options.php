@@ -180,88 +180,92 @@ class Options extends Singleton {
 				 */
 
 				// Override external service (Oauth2) and associated options.
-				$auth_settings['oauth2']                        = $auth_multisite_settings['oauth2'];
-				$auth_settings['oauth2_auto_login']             = $auth_multisite_settings['oauth2_auto_login'] ?? '';
-				$auth_settings['oauth2_num_servers']            = $auth_multisite_settings['oauth2_num_servers'] ?? 1;
-				$auth_settings['oauth2_provider']               = $auth_multisite_settings['oauth2_provider'] ?? '';
-				$auth_settings['oauth2_custom_label']           = $auth_multisite_settings['oauth2_custom_label'] ?? 'OAuth2';
-				$auth_settings['oauth2_clientid']               = $auth_multisite_settings['oauth2_clientid'] ?? '';
-				$auth_settings['oauth2_clientsecret']           = $auth_multisite_settings['oauth2_clientsecret'] ?? '';
-				$auth_settings['oauth2_hosteddomain']           = $auth_multisite_settings['oauth2_hosteddomain'] ?? '';
-				$auth_settings['oauth2_tenant_id']              = $auth_multisite_settings['oauth2_tenant_id'] ?? '';
-				$auth_settings['oauth2_url_authorize']          = $auth_multisite_settings['oauth2_url_authorize'] ?? '';
-				$auth_settings['oauth2_url_token']              = $auth_multisite_settings['oauth2_url_token'] ?? '';
-				$auth_settings['oauth2_url_resource']           = $auth_multisite_settings['oauth2_url_resource'] ?? '';
-				$auth_settings['oauth2_attr_username']          = $auth_multisite_settings['oauth2_attr_username'] ?? '';
-				$auth_settings['oauth2_attr_email']             = $auth_multisite_settings['oauth2_attr_email'] ?? '';
-				$auth_settings['oauth2_attr_first_name']        = $auth_multisite_settings['oauth2_attr_first_name'] ?? '';
-				$auth_settings['oauth2_attr_last_name']         = $auth_multisite_settings['oauth2_attr_last_name'] ?? '';
-				$auth_settings['oauth2_attr_update_on_login']   = $auth_multisite_settings['oauth2_attr_update_on_login'] ?? '';
-				$auth_settings['oauth2_require_verified_email'] = $auth_multisite_settings['oauth2_require_verified_email'] ?? '';
-				$auth_settings['oauth2_link_on_username']       = $auth_multisite_settings['oauth2_link_on_username'] ?? '';
+				$auth_settings['oauth2']                                     = $auth_multisite_settings['oauth2'];
+				$auth_settings['oauth2_auto_login']                          = $auth_multisite_settings['oauth2_auto_login'] ?? '';
+				$auth_settings['oauth2_num_servers']                         = $auth_multisite_settings['oauth2_num_servers'] ?? 1;
+				$auth_settings['oauth2_provider']                            = $auth_multisite_settings['oauth2_provider'] ?? '';
+				$auth_settings['oauth2_custom_label']                        = $auth_multisite_settings['oauth2_custom_label'] ?? 'OAuth2';
+				$auth_settings['oauth2_clientid']                            = $auth_multisite_settings['oauth2_clientid'] ?? '';
+				$auth_settings['oauth2_clientsecret']                        = $auth_multisite_settings['oauth2_clientsecret'] ?? '';
+				$auth_settings['oauth2_hosteddomain']                        = $auth_multisite_settings['oauth2_hosteddomain'] ?? '';
+				$auth_settings['oauth2_tenant_id']                           = $auth_multisite_settings['oauth2_tenant_id'] ?? '';
+				$auth_settings['oauth2_url_authorize']                       = $auth_multisite_settings['oauth2_url_authorize'] ?? '';
+				$auth_settings['oauth2_url_token']                           = $auth_multisite_settings['oauth2_url_token'] ?? '';
+				$auth_settings['oauth2_url_resource']                        = $auth_multisite_settings['oauth2_url_resource'] ?? '';
+				$auth_settings['oauth2_attr_username']                       = $auth_multisite_settings['oauth2_attr_username'] ?? '';
+				$auth_settings['oauth2_attr_email']                          = $auth_multisite_settings['oauth2_attr_email'] ?? '';
+				$auth_settings['oauth2_attr_first_name']                     = $auth_multisite_settings['oauth2_attr_first_name'] ?? '';
+				$auth_settings['oauth2_attr_last_name']                      = $auth_multisite_settings['oauth2_attr_last_name'] ?? '';
+				$auth_settings['oauth2_attr_update_on_login']                = $auth_multisite_settings['oauth2_attr_update_on_login'] ?? '';
+				$auth_settings['oauth2_require_verified_email']              = $auth_multisite_settings['oauth2_require_verified_email'] ?? '';
+				$auth_settings['oauth2_dangerously_skip_email_verification'] = $auth_multisite_settings['oauth2_dangerously_skip_email_verification'] ?? '';
+				$auth_settings['oauth2_link_on_username']                    = $auth_multisite_settings['oauth2_link_on_username'] ?? '';
 				// Add any options for extra OAuth2 servers.
 				if ( ! empty( $auth_multisite_settings['oauth2_num_servers'] ) && intval( $auth_multisite_settings['oauth2_num_servers'] ) > 1 ) {
 					foreach ( range( 2, min( intval( $auth_multisite_settings['oauth2_num_servers'] ), 20 ) ) as $oauth2_num_server ) {
-						$auth_settings[ 'oauth2_provider_' . $oauth2_num_server ]               = $auth_multisite_settings[ 'oauth2_provider_' . $oauth2_num_server ] ?? '';
-						$auth_settings[ 'oauth2_custom_label_' . $oauth2_num_server ]           = $auth_multisite_settings[ 'oauth2_custom_label_' . $oauth2_num_server ] ?? 'OAuth2';
-						$auth_settings[ 'oauth2_clientid_' . $oauth2_num_server ]               = $auth_multisite_settings[ 'oauth2_clientid_' . $oauth2_num_server ] ?? '';
-						$auth_settings[ 'oauth2_clientsecret_' . $oauth2_num_server ]           = $auth_multisite_settings[ 'oauth2_clientsecret_' . $oauth2_num_server ] ?? '';
-						$auth_settings[ 'oauth2_hosteddomain_' . $oauth2_num_server ]           = $auth_multisite_settings[ 'oauth2_hosteddomain_' . $oauth2_num_server ] ?? '';
-						$auth_settings[ 'oauth2_tenant_id_' . $oauth2_num_server ]              = $auth_multisite_settings[ 'oauth2_tenant_id_' . $oauth2_num_server ] ?? '';
-						$auth_settings[ 'oauth2_url_authorize_' . $oauth2_num_server ]          = $auth_multisite_settings[ 'oauth2_url_authorize_' . $oauth2_num_server ] ?? '';
-						$auth_settings[ 'oauth2_url_token_' . $oauth2_num_server ]              = $auth_multisite_settings[ 'oauth2_url_token_' . $oauth2_num_server ] ?? '';
-						$auth_settings[ 'oauth2_url_resource_' . $oauth2_num_server ]           = $auth_multisite_settings[ 'oauth2_url_resource_' . $oauth2_num_server ] ?? '';
-						$auth_settings[ 'oauth2_attr_username_' . $oauth2_num_server ]          = $auth_multisite_settings[ 'oauth2_attr_username_' . $oauth2_num_server ] ?? '';
-						$auth_settings[ 'oauth2_attr_email_' . $oauth2_num_server ]             = $auth_multisite_settings[ 'oauth2_attr_email_' . $oauth2_num_server ] ?? '';
-						$auth_settings[ 'oauth2_attr_first_name_' . $oauth2_num_server ]        = $auth_multisite_settings[ 'oauth2_attr_first_name_' . $oauth2_num_server ] ?? '';
-						$auth_settings[ 'oauth2_attr_last_name_' . $oauth2_num_server ]         = $auth_multisite_settings[ 'oauth2_attr_last_name_' . $oauth2_num_server ] ?? '';
-						$auth_settings[ 'oauth2_attr_update_on_login_' . $oauth2_num_server ]   = $auth_multisite_settings[ 'oauth2_attr_update_on_login_' . $oauth2_num_server ] ?? '';
-						$auth_settings[ 'oauth2_require_verified_email_' . $oauth2_num_server ] = $auth_multisite_settings[ 'oauth2_require_verified_email_' . $oauth2_num_server ] ?? '';
-						$auth_settings[ 'oauth2_link_on_username_' . $oauth2_num_server ]       = $auth_multisite_settings[ 'oauth2_link_on_username_' . $oauth2_num_server ] ?? '';
+						$auth_settings[ 'oauth2_provider_' . $oauth2_num_server ]                            = $auth_multisite_settings[ 'oauth2_provider_' . $oauth2_num_server ] ?? '';
+						$auth_settings[ 'oauth2_custom_label_' . $oauth2_num_server ]                        = $auth_multisite_settings[ 'oauth2_custom_label_' . $oauth2_num_server ] ?? 'OAuth2';
+						$auth_settings[ 'oauth2_clientid_' . $oauth2_num_server ]                            = $auth_multisite_settings[ 'oauth2_clientid_' . $oauth2_num_server ] ?? '';
+						$auth_settings[ 'oauth2_clientsecret_' . $oauth2_num_server ]                        = $auth_multisite_settings[ 'oauth2_clientsecret_' . $oauth2_num_server ] ?? '';
+						$auth_settings[ 'oauth2_hosteddomain_' . $oauth2_num_server ]                        = $auth_multisite_settings[ 'oauth2_hosteddomain_' . $oauth2_num_server ] ?? '';
+						$auth_settings[ 'oauth2_tenant_id_' . $oauth2_num_server ]                           = $auth_multisite_settings[ 'oauth2_tenant_id_' . $oauth2_num_server ] ?? '';
+						$auth_settings[ 'oauth2_url_authorize_' . $oauth2_num_server ]                       = $auth_multisite_settings[ 'oauth2_url_authorize_' . $oauth2_num_server ] ?? '';
+						$auth_settings[ 'oauth2_url_token_' . $oauth2_num_server ]                           = $auth_multisite_settings[ 'oauth2_url_token_' . $oauth2_num_server ] ?? '';
+						$auth_settings[ 'oauth2_url_resource_' . $oauth2_num_server ]                        = $auth_multisite_settings[ 'oauth2_url_resource_' . $oauth2_num_server ] ?? '';
+						$auth_settings[ 'oauth2_attr_username_' . $oauth2_num_server ]                       = $auth_multisite_settings[ 'oauth2_attr_username_' . $oauth2_num_server ] ?? '';
+						$auth_settings[ 'oauth2_attr_email_' . $oauth2_num_server ]                          = $auth_multisite_settings[ 'oauth2_attr_email_' . $oauth2_num_server ] ?? '';
+						$auth_settings[ 'oauth2_attr_first_name_' . $oauth2_num_server ]                     = $auth_multisite_settings[ 'oauth2_attr_first_name_' . $oauth2_num_server ] ?? '';
+						$auth_settings[ 'oauth2_attr_last_name_' . $oauth2_num_server ]                      = $auth_multisite_settings[ 'oauth2_attr_last_name_' . $oauth2_num_server ] ?? '';
+						$auth_settings[ 'oauth2_attr_update_on_login_' . $oauth2_num_server ]                = $auth_multisite_settings[ 'oauth2_attr_update_on_login_' . $oauth2_num_server ] ?? '';
+						$auth_settings[ 'oauth2_require_verified_email_' . $oauth2_num_server ]              = $auth_multisite_settings[ 'oauth2_require_verified_email_' . $oauth2_num_server ] ?? '';
+						$auth_settings[ 'oauth2_dangerously_skip_email_verification_' . $oauth2_num_server ] = $auth_multisite_settings[ 'oauth2_dangerously_skip_email_verification_' . $oauth2_num_server ] ?? '';
+						$auth_settings[ 'oauth2_link_on_username_' . $oauth2_num_server ]                    = $auth_multisite_settings[ 'oauth2_link_on_username_' . $oauth2_num_server ] ?? '';
 					}
 				}
 
 				// Override external service (OIDC) and associated options.
-				$auth_settings['oidc']                        = $auth_multisite_settings['oidc'] ?? '';
-				$auth_settings['oidc_num_servers']            = $auth_multisite_settings['oidc_num_servers'] ?? 1;
-				$auth_settings['oidc_auto_login']             = $auth_multisite_settings['oidc_auto_login'] ?? '';
-				$auth_settings['oidc_custom_label']           = $auth_multisite_settings['oidc_custom_label'] ?? 'OIDC';
-				$auth_settings['oidc_issuer']                 = $auth_multisite_settings['oidc_issuer'] ?? '';
-				$auth_settings['oidc_client_id']              = $auth_multisite_settings['oidc_client_id'] ?? '';
-				$auth_settings['oidc_client_secret']          = $auth_multisite_settings['oidc_client_secret'] ?? '';
-				$auth_settings['oidc_scopes']                 = $auth_multisite_settings['oidc_scopes'] ?? 'openid email profile';
-				$auth_settings['oidc_prompt']                 = $auth_multisite_settings['oidc_prompt'] ?? '';
-				$auth_settings['oidc_login_hint']             = $auth_multisite_settings['oidc_login_hint'] ?? '';
-				$auth_settings['oidc_max_age']                = $auth_multisite_settings['oidc_max_age'] ?? '';
-				$auth_settings['oidc_attr_username']          = $auth_multisite_settings['oidc_attr_username'] ?? 'preferred_username';
-				$auth_settings['oidc_attr_email']             = $auth_multisite_settings['oidc_attr_email'] ?? 'email';
-				$auth_settings['oidc_attr_first_name']        = $auth_multisite_settings['oidc_attr_first_name'] ?? 'given_name';
-				$auth_settings['oidc_attr_last_name']         = $auth_multisite_settings['oidc_attr_last_name'] ?? 'family_name';
-				$auth_settings['oidc_attr_update_on_login']   = $auth_multisite_settings['oidc_attr_update_on_login'] ?? '';
-				$auth_settings['oidc_force_auth_method']      = $auth_multisite_settings['oidc_force_auth_method'] ?? '';
-				$auth_settings['oidc_require_verified_email'] = $auth_multisite_settings['oidc_require_verified_email'] ?? '';
-				$auth_settings['oidc_link_on_username']       = $auth_multisite_settings['oidc_link_on_username'] ?? '';
-				$auth_settings['oidc_hosteddomain']           = $auth_multisite_settings['oidc_hosteddomain'] ?? '';
+				$auth_settings['oidc']                                     = $auth_multisite_settings['oidc'] ?? '';
+				$auth_settings['oidc_num_servers']                         = $auth_multisite_settings['oidc_num_servers'] ?? 1;
+				$auth_settings['oidc_auto_login']                          = $auth_multisite_settings['oidc_auto_login'] ?? '';
+				$auth_settings['oidc_custom_label']                        = $auth_multisite_settings['oidc_custom_label'] ?? 'OIDC';
+				$auth_settings['oidc_issuer']                              = $auth_multisite_settings['oidc_issuer'] ?? '';
+				$auth_settings['oidc_client_id']                           = $auth_multisite_settings['oidc_client_id'] ?? '';
+				$auth_settings['oidc_client_secret']                       = $auth_multisite_settings['oidc_client_secret'] ?? '';
+				$auth_settings['oidc_scopes']                              = $auth_multisite_settings['oidc_scopes'] ?? 'openid email profile';
+				$auth_settings['oidc_prompt']                              = $auth_multisite_settings['oidc_prompt'] ?? '';
+				$auth_settings['oidc_login_hint']                          = $auth_multisite_settings['oidc_login_hint'] ?? '';
+				$auth_settings['oidc_max_age']                             = $auth_multisite_settings['oidc_max_age'] ?? '';
+				$auth_settings['oidc_attr_username']                       = $auth_multisite_settings['oidc_attr_username'] ?? 'preferred_username';
+				$auth_settings['oidc_attr_email']                          = $auth_multisite_settings['oidc_attr_email'] ?? 'email';
+				$auth_settings['oidc_attr_first_name']                     = $auth_multisite_settings['oidc_attr_first_name'] ?? 'given_name';
+				$auth_settings['oidc_attr_last_name']                      = $auth_multisite_settings['oidc_attr_last_name'] ?? 'family_name';
+				$auth_settings['oidc_attr_update_on_login']                = $auth_multisite_settings['oidc_attr_update_on_login'] ?? '';
+				$auth_settings['oidc_force_auth_method']                   = $auth_multisite_settings['oidc_force_auth_method'] ?? '';
+				$auth_settings['oidc_require_verified_email']              = $auth_multisite_settings['oidc_require_verified_email'] ?? '';
+				$auth_settings['oidc_dangerously_skip_email_verification'] = $auth_multisite_settings['oidc_dangerously_skip_email_verification'] ?? '';
+				$auth_settings['oidc_link_on_username']                    = $auth_multisite_settings['oidc_link_on_username'] ?? '';
+				$auth_settings['oidc_hosteddomain']                        = $auth_multisite_settings['oidc_hosteddomain'] ?? '';
 				// Add any options for extra OIDC servers.
 				if ( ! empty( $auth_multisite_settings['oidc_num_servers'] ) && intval( $auth_multisite_settings['oidc_num_servers'] ) > 1 ) {
 					foreach ( range( 2, min( intval( $auth_multisite_settings['oidc_num_servers'] ), 20 ) ) as $oidc_num_server ) {
-						$auth_settings[ 'oidc_custom_label_' . $oidc_num_server ]           = $auth_multisite_settings[ 'oidc_custom_label_' . $oidc_num_server ] ?? 'OIDC';
-						$auth_settings[ 'oidc_issuer_' . $oidc_num_server ]                 = $auth_multisite_settings[ 'oidc_issuer_' . $oidc_num_server ] ?? '';
-						$auth_settings[ 'oidc_client_id_' . $oidc_num_server ]              = $auth_multisite_settings[ 'oidc_client_id_' . $oidc_num_server ] ?? '';
-						$auth_settings[ 'oidc_client_secret_' . $oidc_num_server ]          = $auth_multisite_settings[ 'oidc_client_secret_' . $oidc_num_server ] ?? '';
-						$auth_settings[ 'oidc_scopes_' . $oidc_num_server ]                 = $auth_multisite_settings[ 'oidc_scopes_' . $oidc_num_server ] ?? 'openid email profile';
-						$auth_settings[ 'oidc_prompt_' . $oidc_num_server ]                 = $auth_multisite_settings[ 'oidc_prompt_' . $oidc_num_server ] ?? '';
-						$auth_settings[ 'oidc_login_hint_' . $oidc_num_server ]             = $auth_multisite_settings[ 'oidc_login_hint_' . $oidc_num_server ] ?? '';
-						$auth_settings[ 'oidc_max_age_' . $oidc_num_server ]                = $auth_multisite_settings[ 'oidc_max_age_' . $oidc_num_server ] ?? '';
-						$auth_settings[ 'oidc_attr_username_' . $oidc_num_server ]          = $auth_multisite_settings[ 'oidc_attr_username_' . $oidc_num_server ] ?? 'preferred_username';
-						$auth_settings[ 'oidc_attr_email_' . $oidc_num_server ]             = $auth_multisite_settings[ 'oidc_attr_email_' . $oidc_num_server ] ?? 'email';
-						$auth_settings[ 'oidc_attr_first_name_' . $oidc_num_server ]        = $auth_multisite_settings[ 'oidc_attr_first_name_' . $oidc_num_server ] ?? 'given_name';
-						$auth_settings[ 'oidc_attr_last_name_' . $oidc_num_server ]         = $auth_multisite_settings[ 'oidc_attr_last_name_' . $oidc_num_server ] ?? 'family_name';
-						$auth_settings[ 'oidc_attr_update_on_login_' . $oidc_num_server ]   = $auth_multisite_settings[ 'oidc_attr_update_on_login_' . $oidc_num_server ] ?? '';
-						$auth_settings[ 'oidc_force_auth_method_' . $oidc_num_server ]      = $auth_multisite_settings[ 'oidc_force_auth_method_' . $oidc_num_server ] ?? '';
-						$auth_settings[ 'oidc_require_verified_email_' . $oidc_num_server ] = $auth_multisite_settings[ 'oidc_require_verified_email_' . $oidc_num_server ] ?? '';
-						$auth_settings[ 'oidc_link_on_username_' . $oidc_num_server ]       = $auth_multisite_settings[ 'oidc_link_on_username_' . $oidc_num_server ] ?? '';
-						$auth_settings[ 'oidc_hosteddomain_' . $oidc_num_server ]           = $auth_multisite_settings[ 'oidc_hosteddomain_' . $oidc_num_server ] ?? '';
+						$auth_settings[ 'oidc_custom_label_' . $oidc_num_server ]                        = $auth_multisite_settings[ 'oidc_custom_label_' . $oidc_num_server ] ?? 'OIDC';
+						$auth_settings[ 'oidc_issuer_' . $oidc_num_server ]                              = $auth_multisite_settings[ 'oidc_issuer_' . $oidc_num_server ] ?? '';
+						$auth_settings[ 'oidc_client_id_' . $oidc_num_server ]                           = $auth_multisite_settings[ 'oidc_client_id_' . $oidc_num_server ] ?? '';
+						$auth_settings[ 'oidc_client_secret_' . $oidc_num_server ]                       = $auth_multisite_settings[ 'oidc_client_secret_' . $oidc_num_server ] ?? '';
+						$auth_settings[ 'oidc_scopes_' . $oidc_num_server ]                              = $auth_multisite_settings[ 'oidc_scopes_' . $oidc_num_server ] ?? 'openid email profile';
+						$auth_settings[ 'oidc_prompt_' . $oidc_num_server ]                              = $auth_multisite_settings[ 'oidc_prompt_' . $oidc_num_server ] ?? '';
+						$auth_settings[ 'oidc_login_hint_' . $oidc_num_server ]                          = $auth_multisite_settings[ 'oidc_login_hint_' . $oidc_num_server ] ?? '';
+						$auth_settings[ 'oidc_max_age_' . $oidc_num_server ]                             = $auth_multisite_settings[ 'oidc_max_age_' . $oidc_num_server ] ?? '';
+						$auth_settings[ 'oidc_attr_username_' . $oidc_num_server ]                       = $auth_multisite_settings[ 'oidc_attr_username_' . $oidc_num_server ] ?? 'preferred_username';
+						$auth_settings[ 'oidc_attr_email_' . $oidc_num_server ]                          = $auth_multisite_settings[ 'oidc_attr_email_' . $oidc_num_server ] ?? 'email';
+						$auth_settings[ 'oidc_attr_first_name_' . $oidc_num_server ]                     = $auth_multisite_settings[ 'oidc_attr_first_name_' . $oidc_num_server ] ?? 'given_name';
+						$auth_settings[ 'oidc_attr_last_name_' . $oidc_num_server ]                      = $auth_multisite_settings[ 'oidc_attr_last_name_' . $oidc_num_server ] ?? 'family_name';
+						$auth_settings[ 'oidc_attr_update_on_login_' . $oidc_num_server ]                = $auth_multisite_settings[ 'oidc_attr_update_on_login_' . $oidc_num_server ] ?? '';
+						$auth_settings[ 'oidc_force_auth_method_' . $oidc_num_server ]                   = $auth_multisite_settings[ 'oidc_force_auth_method_' . $oidc_num_server ] ?? '';
+						$auth_settings[ 'oidc_require_verified_email_' . $oidc_num_server ]              = $auth_multisite_settings[ 'oidc_require_verified_email_' . $oidc_num_server ] ?? '';
+						$auth_settings[ 'oidc_dangerously_skip_email_verification_' . $oidc_num_server ] = $auth_multisite_settings[ 'oidc_dangerously_skip_email_verification_' . $oidc_num_server ] ?? '';
+						$auth_settings[ 'oidc_link_on_username_' . $oidc_num_server ]                    = $auth_multisite_settings[ 'oidc_link_on_username_' . $oidc_num_server ] ?? '';
+						$auth_settings[ 'oidc_hosteddomain_' . $oidc_num_server ]                        = $auth_multisite_settings[ 'oidc_hosteddomain_' . $oidc_num_server ] ?? '';
 					}
 				}
 
@@ -518,7 +522,10 @@ class Options extends Singleton {
 			$auth_settings['oauth2_attr_update_on_login'] = '';
 		}
 		if ( ! array_key_exists( 'oauth2_require_verified_email', $auth_settings ) ) {
-			$auth_settings['oauth2_require_verified_email'] = '';
+			$auth_settings['oauth2_require_verified_email'] = '1';
+		}
+		if ( ! array_key_exists( 'oauth2_dangerously_skip_email_verification', $auth_settings ) ) {
+			$auth_settings['oauth2_dangerously_skip_email_verification'] = '';
 		}
 		if ( ! array_key_exists( 'oauth2_link_on_username', $auth_settings ) ) {
 			$auth_settings['oauth2_link_on_username'] = '';
@@ -568,7 +575,10 @@ class Options extends Singleton {
 					$auth_settings[ 'oauth2_attr_update_on_login_' . $oauth2_num_server ] = '';
 				}
 				if ( ! array_key_exists( 'oauth2_require_verified_email_' . $oauth2_num_server, $auth_settings ) ) {
-					$auth_settings[ 'oauth2_require_verified_email_' . $oauth2_num_server ] = '';
+					$auth_settings[ 'oauth2_require_verified_email_' . $oauth2_num_server ] = '1';
+				}
+				if ( ! array_key_exists( 'oauth2_dangerously_skip_email_verification_' . $oauth2_num_server, $auth_settings ) ) {
+					$auth_settings[ 'oauth2_dangerously_skip_email_verification_' . $oauth2_num_server ] = '';
 				}
 				if ( ! array_key_exists( 'oauth2_link_on_username_' . $oauth2_num_server, $auth_settings ) ) {
 					$auth_settings[ 'oauth2_link_on_username_' . $oauth2_num_server ] = '';
@@ -622,7 +632,10 @@ class Options extends Singleton {
 			$auth_settings['oidc_force_auth_method'] = '';
 		}
 		if ( ! array_key_exists( 'oidc_require_verified_email', $auth_settings ) ) {
-			$auth_settings['oidc_require_verified_email'] = '';
+			$auth_settings['oidc_require_verified_email'] = '1';
+		}
+		if ( ! array_key_exists( 'oidc_dangerously_skip_email_verification', $auth_settings ) ) {
+			$auth_settings['oidc_dangerously_skip_email_verification'] = '';
 		}
 		if ( ! array_key_exists( 'oidc_link_on_username', $auth_settings ) ) {
 			$auth_settings['oidc_link_on_username'] = '';
@@ -683,7 +696,10 @@ class Options extends Singleton {
 					$auth_settings[ 'oidc_force_auth_method_' . $oidc_num_server ] = '';
 				}
 				if ( ! array_key_exists( 'oidc_require_verified_email_' . $oidc_num_server, $auth_settings ) ) {
-					$auth_settings[ 'oidc_require_verified_email_' . $oidc_num_server ] = '';
+					$auth_settings[ 'oidc_require_verified_email_' . $oidc_num_server ] = '1';
+				}
+				if ( ! array_key_exists( 'oidc_dangerously_skip_email_verification_' . $oidc_num_server, $auth_settings ) ) {
+					$auth_settings[ 'oidc_dangerously_skip_email_verification_' . $oidc_num_server ] = '';
 				}
 				if ( ! array_key_exists( 'oidc_link_on_username_' . $oidc_num_server, $auth_settings ) ) {
 					$auth_settings[ 'oidc_link_on_username_' . $oidc_num_server ] = '';
@@ -978,7 +994,10 @@ class Options extends Singleton {
 				$auth_multisite_settings['oauth2_attr_update_on_login'] = '';
 			}
 			if ( ! array_key_exists( 'oauth2_require_verified_email', $auth_multisite_settings ) ) {
-				$auth_multisite_settings['oauth2_require_verified_email'] = '';
+				$auth_multisite_settings['oauth2_require_verified_email'] = '1';
+			}
+			if ( ! array_key_exists( 'oauth2_dangerously_skip_email_verification', $auth_multisite_settings ) ) {
+				$auth_multisite_settings['oauth2_dangerously_skip_email_verification'] = '';
 			}
 			if ( ! array_key_exists( 'oauth2_link_on_username', $auth_multisite_settings ) ) {
 				$auth_multisite_settings['oauth2_link_on_username'] = '';
@@ -1028,7 +1047,10 @@ class Options extends Singleton {
 						$auth_multisite_settings[ 'oauth2_attr_update_on_login_' . $oauth2_num_server ] = '';
 					}
 					if ( ! array_key_exists( 'oauth2_require_verified_email_' . $oauth2_num_server, $auth_multisite_settings ) ) {
-						$auth_multisite_settings[ 'oauth2_require_verified_email_' . $oauth2_num_server ] = '';
+						$auth_multisite_settings[ 'oauth2_require_verified_email_' . $oauth2_num_server ] = '1';
+					}
+					if ( ! array_key_exists( 'oauth2_dangerously_skip_email_verification_' . $oauth2_num_server, $auth_multisite_settings ) ) {
+						$auth_multisite_settings[ 'oauth2_dangerously_skip_email_verification_' . $oauth2_num_server ] = '';
 					}
 					if ( ! array_key_exists( 'oauth2_link_on_username_' . $oauth2_num_server, $auth_multisite_settings ) ) {
 						$auth_multisite_settings[ 'oauth2_link_on_username_' . $oauth2_num_server ] = '';
@@ -1087,7 +1109,10 @@ class Options extends Singleton {
 				$auth_multisite_settings['oidc_force_auth_method'] = '';
 			}
 			if ( ! array_key_exists( 'oidc_require_verified_email', $auth_multisite_settings ) ) {
-				$auth_multisite_settings['oidc_require_verified_email'] = '';
+				$auth_multisite_settings['oidc_require_verified_email'] = '1';
+			}
+			if ( ! array_key_exists( 'oidc_dangerously_skip_email_verification', $auth_multisite_settings ) ) {
+				$auth_multisite_settings['oidc_dangerously_skip_email_verification'] = '';
 			}
 			if ( ! array_key_exists( 'oidc_link_on_username', $auth_multisite_settings ) ) {
 				$auth_multisite_settings['oidc_link_on_username'] = '';
@@ -1140,7 +1165,10 @@ class Options extends Singleton {
 						$auth_multisite_settings[ 'oidc_force_auth_method_' . $oidc_num_server ] = '';
 					}
 					if ( ! array_key_exists( 'oidc_require_verified_email_' . $oidc_num_server, $auth_multisite_settings ) ) {
-						$auth_multisite_settings[ 'oidc_require_verified_email_' . $oidc_num_server ] = '';
+						$auth_multisite_settings[ 'oidc_require_verified_email_' . $oidc_num_server ] = '1';
+					}
+					if ( ! array_key_exists( 'oidc_dangerously_skip_email_verification_' . $oidc_num_server, $auth_multisite_settings ) ) {
+						$auth_multisite_settings[ 'oidc_dangerously_skip_email_verification_' . $oidc_num_server ] = '';
 					}
 					if ( ! array_key_exists( 'oidc_link_on_username_' . $oidc_num_server, $auth_multisite_settings ) ) {
 						$auth_multisite_settings[ 'oidc_link_on_username_' . $oidc_num_server ] = '';
@@ -1411,6 +1439,13 @@ class Options extends Singleton {
 
 		// Sanitize OAuth2 require verified email (checkbox: value can only be '1' or empty string).
 		$auth_settings['oauth2_require_verified_email'] = array_key_exists( 'oauth2_require_verified_email', $auth_settings ) && strlen( $auth_settings['oauth2_require_verified_email'] ) > 0 ? '1' : '';
+		// Default OAuth2 require verified email to '1' when first enabling OAuth2 external service.
+		if ( empty( $auth_settings['oauth2_require_verified_email'] ) && empty( $auth_settings['oauth2'] ) && ! empty( $_REQUEST['auth_settings']['oauth2'] ) ) {
+			$auth_settings['oauth2_require_verified_email'] = '1';
+		}
+
+		// Sanitize OAuth2 skip email verification (checkbox: value can only be '1' or empty string).
+		$auth_settings['oauth2_dangerously_skip_email_verification'] = array_key_exists( 'oauth2_dangerously_skip_email_verification', $auth_settings ) && strlen( $auth_settings['oauth2_dangerously_skip_email_verification'] ) > 0 ? '1' : '';
 
 		// Sanitize OAuth2 link on username (checkbox: value can only be '1' or empty string).
 		$auth_settings['oauth2_link_on_username'] = array_key_exists( 'oauth2_link_on_username', $auth_settings ) && strlen( $auth_settings['oauth2_link_on_username'] ) > 0 ? '1' : '';
@@ -1425,6 +1460,9 @@ class Options extends Singleton {
 
 				// Sanitize OAuth2 require verified email (checkbox: value can only be '1' or empty string).
 				$auth_settings[ 'oauth2_require_verified_email_' . $oauth2_num_server ] = array_key_exists( 'oauth2_require_verified_email_' . $oauth2_num_server, $auth_settings ) && strlen( $auth_settings[ 'oauth2_require_verified_email_' . $oauth2_num_server ] ) > 0 ? '1' : '';
+
+				// Sanitize OAuth2 skip email verification (checkbox: value can only be '1' or empty string).
+				$auth_settings[ 'oauth2_dangerously_skip_email_verification_' . $oauth2_num_server ] = array_key_exists( 'oauth2_dangerously_skip_email_verification_' . $oauth2_num_server, $auth_settings ) && strlen( $auth_settings[ 'oauth2_dangerously_skip_email_verification_' . $oauth2_num_server ] ) > 0 ? '1' : '';
 
 				// Sanitize OAuth2 link on username (checkbox: value can only be '1' or empty string).
 				$auth_settings[ 'oauth2_link_on_username_' . $oauth2_num_server ] = array_key_exists( 'oauth2_link_on_username_' . $oauth2_num_server, $auth_settings ) && strlen( $auth_settings[ 'oauth2_link_on_username_' . $oauth2_num_server ] ) > 0 ? '1' : '';
@@ -1532,6 +1570,13 @@ class Options extends Singleton {
 
 		// Sanitize OIDC require verified email (checkbox: value can only be '1' or empty string).
 		$auth_settings['oidc_require_verified_email'] = array_key_exists( 'oidc_require_verified_email', $auth_settings ) && strlen( $auth_settings['oidc_require_verified_email'] ) > 0 ? '1' : '';
+		// Default OIDC require verified email to '1' when first enabling OIDC external service.
+		if ( empty( $auth_settings['oidc_require_verified_email'] ) && empty( $auth_settings['oidc'] ) && ! empty( $_REQUEST['auth_settings']['oidc'] ) ) {
+			$auth_settings['oidc_require_verified_email'] = '1';
+		}
+
+		// Sanitize OIDC skip email verification (checkbox: value can only be '1' or empty string).
+		$auth_settings['oidc_dangerously_skip_email_verification'] = array_key_exists( 'oidc_dangerously_skip_email_verification', $auth_settings ) && strlen( $auth_settings['oidc_dangerously_skip_email_verification'] ) > 0 ? '1' : '';
 
 		// Sanitize OIDC link on username (checkbox: value can only be '1' or empty string).
 		$auth_settings['oidc_link_on_username'] = array_key_exists( 'oidc_link_on_username', $auth_settings ) && strlen( $auth_settings['oidc_link_on_username'] ) > 0 ? '1' : '';
@@ -1548,12 +1593,15 @@ class Options extends Singleton {
 				}
 
 				// Sanitize OIDC force auth method (select: value can only be 'client_secret_basic', 'client_secret_post', 'client_secret_jwt', 'private_key_jwt', or empty string).
-				if ( ! isset( $auth_settings[ 'oidc_force_auth_method' . $oidc_num_server ] ) || ! in_array( $auth_settings[ 'oidc_force_auth_method' . $oidc_num_server ], array( '', 'client_secret_basic', 'client_secret_post', 'client_secret_jwt', 'private_key_jwt' ), true ) ) {
-					$auth_settings[ 'oidc_force_auth_method' . $oidc_num_server ] = '';
+				if ( ! isset( $auth_settings[ 'oidc_force_auth_method_' . $oidc_num_server ] ) || ! in_array( $auth_settings[ 'oidc_force_auth_method_' . $oidc_num_server ], array( '', 'client_secret_basic', 'client_secret_post', 'client_secret_jwt', 'private_key_jwt' ), true ) ) {
+					$auth_settings[ 'oidc_force_auth_method_' . $oidc_num_server ] = '';
 				}
 
 				// Sanitize OIDC require verified email (checkbox: value can only be '1' or empty string).
 				$auth_settings[ 'oidc_require_verified_email_' . $oidc_num_server ] = array_key_exists( 'oidc_require_verified_email_' . $oidc_num_server, $auth_settings ) && strlen( $auth_settings[ 'oidc_require_verified_email_' . $oidc_num_server ] ) > 0 ? '1' : '';
+
+				// Sanitize OIDC skip email verification (checkbox: value can only be '1' or empty string).
+				$auth_settings[ 'oidc_dangerously_skip_email_verification_' . $oidc_num_server ] = array_key_exists( 'oidc_dangerously_skip_email_verification_' . $oidc_num_server, $auth_settings ) && strlen( $auth_settings[ 'oidc_dangerously_skip_email_verification_' . $oidc_num_server ] ) > 0 ? '1' : '';
 
 				// Sanitize OIDC link on username (checkbox: value can only be '1' or empty string).
 				$auth_settings[ 'oidc_link_on_username_' . $oidc_num_server ] = array_key_exists( 'oidc_link_on_username_' . $oidc_num_server, $auth_settings ) && strlen( $auth_settings[ 'oidc_link_on_username_' . $oidc_num_server ] ) > 0 ? '1' : '';
@@ -1682,30 +1730,32 @@ class Options extends Singleton {
 	 * @return void
 	 */
 	public function print_section_info_tabs( $args = '' ) {
+		// phpcs:ignore WordPress.Security.NonceVerification
+		$active_tab = empty( $_GET['tab'] ) ? 'access_lists' : sanitize_key( wp_unslash( $_GET['tab'] ) );
 		if ( Helper::NETWORK_CONTEXT === Helper::get_context( $args ) ) :
 			?>
 			<h2 class="nav-tab-wrapper">
-				<a class="nav-tab nav-tab-access_lists nav-tab-active" href="javascript:chooseTab('access_lists' );"><?php esc_html_e( 'Access Lists', 'authorizer' ); ?></a>
-				<a class="nav-tab nav-tab-external" href="javascript:chooseTab('external' );"><?php esc_html_e( 'External Service', 'authorizer' ); ?></a>
-				<a class="nav-tab nav-tab-external_oauth2" href="javascript:chooseTab('external_oauth2' );"><?php esc_html_e( 'OAuth2', 'authorizer' ); ?></a>
-				<a class="nav-tab nav-tab-external_oidc" href="javascript:chooseTab('external_oidc' );"><?php esc_html_e( 'OIDC', 'authorizer' ); ?></a>
-				<a class="nav-tab nav-tab-external_google" href="javascript:chooseTab('external_google' );"><?php esc_html_e( 'Google', 'authorizer' ); ?></a>
-				<a class="nav-tab nav-tab-external_cas" href="javascript:chooseTab('external_cas' );"><?php esc_html_e( 'CAS', 'authorizer' ); ?></a>
-				<a class="nav-tab nav-tab-external_ldap" href="javascript:chooseTab('external_ldap' );"><?php esc_html_e( 'LDAP', 'authorizer' ); ?></a>
-				<a class="nav-tab nav-tab-advanced" href="javascript:chooseTab('advanced' );"><?php esc_html_e( 'Advanced', 'authorizer' ); ?></a>
+				<a class="nav-tab nav-tab-access_lists<?php echo 'access_lists' === $active_tab ? ' nav-tab-active' : ''; ?>" href="javascript:chooseTab('access_lists' );"><?php esc_html_e( 'Access Lists', 'authorizer' ); ?></a>
+				<a class="nav-tab nav-tab-external<?php echo 'external' === $active_tab ? ' nav-tab-active' : ''; ?>" href="javascript:chooseTab('external' );"><?php esc_html_e( 'External Service', 'authorizer' ); ?></a>
+				<a class="nav-tab nav-tab-external_oauth2<?php echo 'external_oauth2' === $active_tab ? ' nav-tab-active' : ''; ?>" href="javascript:chooseTab('external_oauth2' );"><?php esc_html_e( 'OAuth2', 'authorizer' ); ?></a>
+				<a class="nav-tab nav-tab-external_oidc<?php echo 'external_oidc' === $active_tab ? ' nav-tab-active' : ''; ?>" href="javascript:chooseTab('external_oidc' );"><?php esc_html_e( 'OIDC', 'authorizer' ); ?></a>
+				<a class="nav-tab nav-tab-external_google<?php echo 'external_google' === $active_tab ? ' nav-tab-active' : ''; ?>" href="javascript:chooseTab('external_google' );"><?php esc_html_e( 'Google', 'authorizer' ); ?></a>
+				<a class="nav-tab nav-tab-external_cas<?php echo 'external_cas' === $active_tab ? ' nav-tab-active' : ''; ?>" href="javascript:chooseTab('external_cas' );"><?php esc_html_e( 'CAS', 'authorizer' ); ?></a>
+				<a class="nav-tab nav-tab-external_ldap<?php echo 'external_ldap' === $active_tab ? ' nav-tab-active' : ''; ?>" href="javascript:chooseTab('external_ldap' );"><?php esc_html_e( 'LDAP', 'authorizer' ); ?></a>
+				<a class="nav-tab nav-tab-advanced<?php echo 'advanced' === $active_tab ? ' nav-tab-active' : ''; ?>" href="javascript:chooseTab('advanced' );"><?php esc_html_e( 'Advanced', 'authorizer' ); ?></a>
 			</h2>
 		<?php else : ?>
 			<h2 class="nav-tab-wrapper">
-				<a class="nav-tab nav-tab-access_lists nav-tab-active" href="javascript:chooseTab('access_lists' );"><?php esc_html_e( 'Access Lists', 'authorizer' ); ?></a>
-				<a class="nav-tab nav-tab-access_login" href="javascript:chooseTab('access_login' );"><?php esc_html_e( 'Login Access', 'authorizer' ); ?></a>
-				<a class="nav-tab nav-tab-access_public" href="javascript:chooseTab('access_public' );"><?php esc_html_e( 'Public Access', 'authorizer' ); ?></a>
-				<a class="nav-tab nav-tab-external" href="javascript:chooseTab('external' );"><?php esc_html_e( 'External Service', 'authorizer' ); ?></a>
-				<a class="nav-tab nav-tab-external_oauth2" href="javascript:chooseTab('external_oauth2' );"><?php esc_html_e( 'OAuth2', 'authorizer' ); ?></a>
-				<a class="nav-tab nav-tab-external_oidc" href="javascript:chooseTab('external_oidc' );"><?php esc_html_e( 'OIDC', 'authorizer' ); ?></a>
-				<a class="nav-tab nav-tab-external_google" href="javascript:chooseTab('external_google' );"><?php esc_html_e( 'Google', 'authorizer' ); ?></a>
-				<a class="nav-tab nav-tab-external_cas" href="javascript:chooseTab('external_cas' );"><?php esc_html_e( 'CAS', 'authorizer' ); ?></a>
-				<a class="nav-tab nav-tab-external_ldap" href="javascript:chooseTab('external_ldap' );"><?php esc_html_e( 'LDAP', 'authorizer' ); ?></a>
-				<a class="nav-tab nav-tab-advanced" href="javascript:chooseTab('advanced' );"><?php esc_html_e( 'Advanced', 'authorizer' ); ?></a>
+				<a class="nav-tab nav-tab-access_lists<?php echo 'access_lists' === $active_tab ? ' nav-tab-active' : ''; ?>" href="javascript:chooseTab('access_lists' );"><?php esc_html_e( 'Access Lists', 'authorizer' ); ?></a>
+				<a class="nav-tab nav-tab-access_login<?php echo 'access_login' === $active_tab ? ' nav-tab-active' : ''; ?>" href="javascript:chooseTab('access_login' );"><?php esc_html_e( 'Login Access', 'authorizer' ); ?></a>
+				<a class="nav-tab nav-tab-access_public<?php echo 'access_public' === $active_tab ? ' nav-tab-active' : ''; ?>" href="javascript:chooseTab('access_public' );"><?php esc_html_e( 'Public Access', 'authorizer' ); ?></a>
+				<a class="nav-tab nav-tab-external<?php echo 'external' === $active_tab ? ' nav-tab-active' : ''; ?>" href="javascript:chooseTab('external' );"><?php esc_html_e( 'External Service', 'authorizer' ); ?></a>
+				<a class="nav-tab nav-tab-external_oauth2<?php echo 'external_oauth2' === $active_tab ? ' nav-tab-active' : ''; ?>" href="javascript:chooseTab('external_oauth2' );"><?php esc_html_e( 'OAuth2', 'authorizer' ); ?></a>
+				<a class="nav-tab nav-tab-external_oidc<?php echo 'external_oidc' === $active_tab ? ' nav-tab-active' : ''; ?>" href="javascript:chooseTab('external_oidc' );"><?php esc_html_e( 'OIDC', 'authorizer' ); ?></a>
+				<a class="nav-tab nav-tab-external_google<?php echo 'external_google' === $active_tab ? ' nav-tab-active' : ''; ?>" href="javascript:chooseTab('external_google' );"><?php esc_html_e( 'Google', 'authorizer' ); ?></a>
+				<a class="nav-tab nav-tab-external_cas<?php echo 'external_cas' === $active_tab ? ' nav-tab-active' : ''; ?>" href="javascript:chooseTab('external_cas' );"><?php esc_html_e( 'CAS', 'authorizer' ); ?></a>
+				<a class="nav-tab nav-tab-external_ldap<?php echo 'external_ldap' === $active_tab ? ' nav-tab-active' : ''; ?>" href="javascript:chooseTab('external_ldap' );"><?php esc_html_e( 'LDAP', 'authorizer' ); ?></a>
+				<a class="nav-tab nav-tab-advanced<?php echo 'advanced' === $active_tab ? ' nav-tab-active' : ''; ?>" href="javascript:chooseTab('advanced' );"><?php esc_html_e( 'Advanced', 'authorizer' ); ?></a>
 			</h2>
 			<?php
 		endif;

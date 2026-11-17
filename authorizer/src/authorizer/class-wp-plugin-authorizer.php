@@ -48,7 +48,16 @@ class WP_Plugin_Authorizer extends Singleton {
 		add_action( 'wp_logout', array( Authentication::get_instance(), 'custom_logout' ), 10, 1 );
 
 		// Verify OAuth2 Azure email when clicking link in verification email.
+		add_action( 'admin_post_authorizer_oauth2_azure_verify_email', array( Authentication::get_instance(), 'oauth2_azure_verify_email' ) );
 		add_action( 'admin_post_nopriv_authorizer_oauth2_azure_verify_email', array( Authentication::get_instance(), 'oauth2_azure_verify_email' ) );
+
+		// Verify OAuth2 (generic) email when clicking link in verification email.
+		add_action( 'admin_post_authorizer_oauth2_generic_verify_email', array( Authentication::get_instance(), 'oauth2_generic_verify_email' ) );
+		add_action( 'admin_post_nopriv_authorizer_oauth2_generic_verify_email', array( Authentication::get_instance(), 'oauth2_generic_verify_email' ) );
+
+		// Verify OIDC email when clicking link in verification email.
+		add_action( 'admin_post_authorizer_oidc_verify_email', array( Authentication::get_instance(), 'oidc_verify_email' ) );
+		add_action( 'admin_post_nopriv_authorizer_oidc_verify_email', array( Authentication::get_instance(), 'oidc_verify_email' ) );
 
 		// Create settings link on Plugins page.
 		add_filter( 'plugin_action_links_' . plugin_basename( plugin_root() ), array( Admin_Page::get_instance(), 'plugin_settings_link' ) );
